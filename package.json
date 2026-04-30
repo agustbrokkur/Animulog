@@ -5,16 +5,11 @@
     "apps/*"
   ],
   "scripts": {
-    "dev": "concurrently \"npm run dev:frontend\"",
+    "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:server\"",
     "dev:frontend": "npm run dev -w animulog-frontend",
-    "build": "tsc -b && vite build",
-    "lint": "eslint .",
-    "preview": "vite preview"
-  },
-  "dependencies": {
+    "dev:server": "npm run dev -w animulog-server"
   },
   "devDependencies": {
-    "concurrently": "^9.2.1",
-    "vite": "^8.0.10"
+    "concurrently": "^9.2.1"
   }
 }
