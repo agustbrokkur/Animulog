@@ -1,7 +1,7 @@
 * text=auto
 
 # Data
-/apps/server/data/*.json
+/apps/server/database/*.json
 
 # Logs
 logs

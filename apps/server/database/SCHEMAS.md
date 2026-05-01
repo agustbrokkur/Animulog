@@ -1,6 +1,6 @@
-# Data schemas
+# Schemas
 
-## animulog.json
+## animu.json
 ```json
 {
     "Section Name": {
