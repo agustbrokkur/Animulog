@@ -1,5 +1,8 @@
 * text=auto
 
+# Data
+/apps/server/data/*.json
+
 # Logs
 logs
 *.log
