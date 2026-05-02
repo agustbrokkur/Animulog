@@ -1,6 +1,7 @@
 import express from "express";
+import fs from "fs";
 
-const DATA_FILE = "../database/animu.json";
+const DATA_FILE = "./database/animu.json";
 
 const animuRouter = express.Router();
 
@@ -12,12 +13,12 @@ function writeData(data) {
     fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2), "utf-8");
 }
 
-animuRouter.get("/api/data", (req, res) => {
+animuRouter.get("/", (req, res) => {
     const data = readData();
     res.json(data);
 });
 
-animuRouter.post("/api/data", (req, res) => {
+animuRouter.post("/", (req, res) => {
     try {
         writeData(req.body);
         res.status(200)

@@ -3,6 +3,6 @@ import { animuRouter } from "./animu.js"
 
 const routes = express.Router();
 
-routes.use("/", animuRouter);
+routes.use("/animu", animuRouter);
 
 export { routes };

@@ -7,7 +7,7 @@ const PORT = 3001;
 const app = express();
 
 app.use(express.json({ limit: '10mb' }));
-app.use("/app", routes);
+app.use("/api", routes);
 
 app.get("/", (req, res) => {
     res.send("Animulog Server");
