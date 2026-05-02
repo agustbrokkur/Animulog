@@ -1,6 +1,5 @@
-import express from "express";
-import fs from "fs";
-import { routes } from "./routes/index.js"
+import express, { type Request, type Response} from "express";
+import { routes } from "./routes/index.ts"
 
 const PORT = 3001;
 
@@ -9,7 +8,7 @@ const app = express();
 app.use(express.json({ limit: '10mb' }));
 app.use("/api", routes);
 
-app.get("/", (req, res) => {
+app.get("/", (_: Request, res: Response) => {
     res.send("Animulog Server");
 });
 

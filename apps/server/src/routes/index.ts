@@ -1,5 +1,5 @@
 import express from "express";
-import { animuRouter } from "./animu.js"
+import { animuRouter } from "./animu.ts"
 
 const routes = express.Router();
 

@@ -1,0 +1,41 @@
+{
+  "defaultView": "list",
+  "defaultSort": {
+    "by": "order",
+    "dir": "asc"
+  },
+  "sectionSortOverrides": {
+    "unsorted": {
+      "by": "order",
+      "dir": "asc"
+    }
+  },
+  "dashboardWidgets": [
+    "watching",
+    "on_hold",
+    "favorites",
+    "section_grid",
+    "dropped",
+    "non_anime",
+    "to_watch",
+    "saved_for_later",
+    "series_to_continue",
+    "watched_shows",
+    "watched_films",
+    "watched_ovas"
+  ],
+  "dashboardFranchises": [],
+  "dashboardTags": [],
+  "showOrderNumbers": true,
+  "enableDragReorder": true,
+  "sectionOverrides": {},
+  "customSections": [],
+  "sectionOrder": null,
+  "backupEnabled": true,
+  "backupFolder": "D:\\Forge\\test export",
+  "infoSource": "mal",
+  "removedSections": [],
+  "listLayoutGrid": false,
+  "cardSize": "large",
+  "showBulkSelect": false
+}
