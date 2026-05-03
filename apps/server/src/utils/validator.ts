@@ -2,7 +2,11 @@
 import { validate as uuidValidate } from "uuid";
 import type { CreateEntry, Entry } from "../models/animu.model";
 
-function isValidUrl(url: string | null): boolean {
+export function isValidSection(section: string): boolean {
+    return !section || section.trim().length === 0;
+}
+
+export function isValidUrl(url: string | null): boolean {
     if (url !== null) {
         try {
             new URL(url);
@@ -13,16 +17,16 @@ function isValidUrl(url: string | null): boolean {
     return true;
 }
 
-function isValidOptionalNumber(value: number | null): boolean {
+export function isValidNumber(value: number): boolean {
+    return typeof value === "number" && Number.isFinite(value) && value >= 0;
+}
+
+export function isValidOptionalNumber(value: number | null): boolean {
     if (value === null) {
         return true;
     }
 
     return Number.isFinite(value) && value >= 0;
-}
-
-function isValidNumber(value: number): boolean {
-    return typeof value === "number" && Number.isFinite(value) && value >= 0;
 }
 
 export function validateCreateEntry(entry: CreateEntry): string | null {
