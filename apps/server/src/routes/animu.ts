@@ -1,6 +1,6 @@
 import { type Request, type Response, Router } from "express";
-import type { CreateEntry, Entry } from "../models/animu.model.ts";
-import { isValidSection, validateCreateEntry } from "../utils/validator.ts";
+import type { CreateEntry, CreateSection, UpdateSection, Entry, Section } from "../models/animu.model.ts";
+import { isValidUUID, validateCreateEntry, validateCreateSection, validateUpdateSection } from "../utils/validator.ts";
 import { generateUniqueId } from "../utils/generators.ts";
 import { handleError } from "../utils/errorUtils.ts";
 import { readAnimuData, writeAnimuData } from "../utils/fileUtils.ts";
@@ -23,7 +23,7 @@ animuRouter.get("/", (_: Request, res: Response) => {
 animuRouter.get("/sections", (_: Request, res: Response) => {
     try {
         const data = readAnimuData();
-        const sections = Object.keys(data) ?? [];
+        const sections = data.sections;
 
         res.status(200).json(sections);
     } catch (error: unknown) {
@@ -32,24 +32,32 @@ animuRouter.get("/sections", (_: Request, res: Response) => {
 });
 
 // Create new Section
-animuRouter.post("/sections", (req: Request<any, any, { newSection: string }>, res: Response) => {
+animuRouter.post("/sections", (req: Request<any, any, CreateSection>, res: Response) => {
     try {
-        const { newSection } = req.body;
-        if (!isValidSection(newSection)) {
+        const createdSection = req.body;
+        const validated = validateCreateSection(createdSection);
+        if (validated) {
             return res.status(400).json({ 
-                message: "Invalid new section name" 
-
+                message: validated 
             });
         }
 
         const data = readAnimuData();
-        if (data[newSection]) {
+        if (data.sections.some(section => section.label === createdSection.label)) {
             return res.status(400).json({ 
-                message: `Section "${newSection} already exist` 
+                message: `Section "${createdSection.label} already exist` 
             });
         }
 
-        data[newSection] = [];
+        const sectionIds = data.sections.map(section => section.id);
+        const newSection: Section = {
+            id: generateUniqueId(sectionIds),
+            label: createdSection.label,
+            system: createdSection.system,
+            entryIds: []
+        }
+
+        data.sections.push(newSection);
         writeAnimuData(data);
 
         res.status(201).json({
@@ -61,43 +69,71 @@ animuRouter.post("/sections", (req: Request<any, any, { newSection: string }>, r
     }
 });
 
-// Update Section name
-animuRouter.put("/sections/:section", (req: Request<{ section: string }, any, { newSection: string }>, res: Response) => {
+// Get Section via Id
+animuRouter.get("/sections:id", (req: Request<{ id: string }>, res: Response) => {
     try {
-        const { section } = req.params;
-        if (!isValidSection(section)) {
+        const { id } = req.params;
+        if (!isValidUUID(id)) {
             return res.status(400).json({ 
-                message: "Invalid section name" 
+                message: "Invalid section id" 
+            });
+        }
+        const data = readAnimuData();
+        const section = data.sections.find(s => s.id === id); //Object.keys(data) ?? [];
+
+        if (!section) {
+            return res.status(404).json({ 
+                message: `Section id "${id}" not found` 
             });
         }
 
-        const { newSection } = req.body;
-        if (!isValidSection(newSection)) {
+        res.status(200).json(section);
+    } catch (error: unknown) {
+        handleError(res, error, "Error fetching sections");
+    }
+});
+
+// Update Section name
+animuRouter.put("/sections/:id", (req: Request<{ id: string }, any, UpdateSection>, res: Response) => {
+    try {
+        const { id } = req.params;
+        if (!isValidUUID(id)) {
             return res.status(400).json({ 
-                message: "Invalid new section name" 
+                message: "Invalid section id" 
+            });
+        }
+
+        const updatedSection = req.body;
+        const validated = validateUpdateSection(updatedSection);
+        if (validated) {
+            return res.status(400).json({ 
+                message: validated 
             });
         }
 
         const data = readAnimuData();
+        const existingSection = data.sections.find(s => s.id === id)
 
-        if (!data[section]) {
+        if (!existingSection) {
             return res.status(404).json({ 
-                message: `Section "${section}" not found` 
+                message: `Section id "${id}" not found` 
             });
         }
 
-        if (data[newSection]) {
+        if (data.sections.some(s => s.label === updatedSection.label)) {
             return res.status(400).json({ 
-                message: `Section "${newSection}" already exist` 
+                message: `Section "${updatedSection.label}" already exist` 
             });
         }
 
-        data[newSection] = data[section];
-        delete data[section];
+        const oldSectionName = existingSection.label;
+        const newSectionName = updatedSection.label
+        
+        existingSection.label = newSectionName;
         writeAnimuData(data);
 
         res.status(200).json({
-            message: `Renamed section "${section}" to "${newSection}"`,
+            message: `Renamed section "${oldSectionName}" to "${newSectionName}"`,
             ok: true,
         });
     } catch (error: unknown) {
@@ -116,13 +152,13 @@ animuRouter.delete("/sections/:section", (req: Request<{ section: string }>, res
         }
 
         const data = readAnimuData();
-        if (!data[section]) {
+        if (!data.sections.some(s => s.label === section)) {
             return res.status(404).json({ 
                 message: `Section "${section}" not found` 
             });
         }
 
-        delete data[section];
+        data.sections = data.sections.filter(s => s.label !== section);
         writeAnimuData(data);
 
         res.status(200).json({
@@ -185,7 +221,8 @@ animuRouter.post("/:section", (req: Request<{ section: string }, any, CreateEntr
             });
         }
 
-        const newId = generateUniqueId(data);
+        const setOfIds = Object.values(data).flatMap(entries => entries.map(x => x.id));
+        const newId = generateUniqueId(setOfIds);
         const newAddedAt = Date.now();
         const newEntry: Entry = {
             ...createdEntry,

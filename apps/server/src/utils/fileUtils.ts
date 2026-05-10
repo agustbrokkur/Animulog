@@ -3,6 +3,7 @@ import type { Animu } from "../models/animu.model";
 
 const DATA_FILE = "./src/database/animu.json";
 
+
 export function readAnimuData(): Animu {
     return JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
 }

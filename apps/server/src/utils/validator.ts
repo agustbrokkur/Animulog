@@ -1,9 +1,13 @@
 
 import { validate as uuidValidate } from "uuid";
-import type { CreateEntry, Entry } from "../models/animu.model";
+import type { CreateEntry, CreateSection, UpdateSection, Entry, Section } from "../models/animu.model";
 
-export function isValidSection(section: string): boolean {
-    return !section || section.trim().length === 0;
+export function isValidUUID(value: string): boolean {
+    return uuidValidate(value);
+}
+
+export function isValidString(value: string): boolean {
+    return value !== null && value !== undefined && value.trim().length > 0;
 }
 
 export function isValidUrl(url: string | null): boolean {
@@ -29,11 +33,49 @@ export function isValidOptionalNumber(value: number | null): boolean {
     return Number.isFinite(value) && value >= 0;
 }
 
+export function isValidStringArray(value: string[]): boolean {
+    return Array.isArray(value) && value.every(item => typeof item === "string");
+}
+
+export function validateUpdateSection(section: UpdateSection): string | null {
+    if (!section || typeof section !== "object" || Array.isArray(section)) {
+        return "Invalid section";
+    }
+    if (!isValidString(section.label)) {
+        return "Invalid section label"
+    }
+    return null;
+}
+
+export function validateCreateSection(section: CreateSection): string | null {
+    const validationMessage = validateUpdateSection(section);
+
+    if (validationMessage !== null) {
+        return validationMessage;
+    }
+    if (typeof section.system !== 'boolean') {
+        return "Invalid section label"
+    }
+    return null;
+}
+
+export function validateSection(section: Section): string | null {
+    const validationMessage = validateCreateSection(section);
+
+    if (validationMessage !== null) {
+        return validationMessage;
+    }
+    if (!isValidStringArray(section.entryIds)) {
+        return "Invalid array of Entry Ids";
+    }
+    return null;
+}
+
 export function validateCreateEntry(entry: CreateEntry): string | null {
     if (!entry || typeof entry !== "object" || Array.isArray(entry)) {
         return "Invalid entry";
     }
-    if (!entry.title || typeof entry.title !== "string") {
+    if (!isValidString(entry.title)) {
         return "Invalid title";
     }
     if (typeof entry.favorite !== "boolean") {
@@ -42,21 +84,17 @@ export function validateCreateEntry(entry: CreateEntry): string | null {
     if (!isValidUrl(entry.coverUrl)) {
         return "Invalid coverUrl";
     }
-    if (!isValidOptionalNumber(entry.episodeCurrent)) {
-        return "Invalid episodeCurrent";
+    if (!isValidOptionalNumber(entry.current)) {
+        return "Invalid current";
     }
-    if (!isValidOptionalNumber(entry.episodeTotal)) {
-        return "Invalid episodeTotal";
+    if (!isValidOptionalNumber(entry.total)) {
+        return "Invalid total";
     }
-    if (typeof entry.episodeCurrent === "number" && typeof entry.episodeTotal === "number" && entry.episodeCurrent > entry.episodeTotal) {
-        return "Value episodeCurrent cannot exceed episodeTotal";
+    if (typeof entry.current === "number" && typeof entry.total === "number" && entry.current > entry.total) {
+        return "Value current cannot exceed total";
     }
-    if (entry.note !== null 
-        && typeof entry.note !== "string") {
+    if (entry.note !== null && !isValidString(entry.note)) {
         return "Invalid note";
-    }
-    if (!isValidNumber(entry.order)) {
-        return "Invalid order";
     }
     return null;
 }

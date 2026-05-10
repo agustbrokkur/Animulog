@@ -1,8 +1,7 @@
 import { v4 as uuidv4 } from "uuid";
-import type { Animu } from "../models/animu.model";
 
-export function generateUniqueId(data: Animu): string {
-    const setOfIds = new Set(Object.values(data).flatMap(entries => entries.map(x => x.id)));
+export function generateUniqueId(listOfIds: string[]): string {
+    const setOfIds = new Set(listOfIds);
     let id: string | null = null;
     while (id === null) {
         const newId = uuidv4();
