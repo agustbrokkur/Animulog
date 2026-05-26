@@ -1,6 +1,5 @@
-
 import { validate as uuidValidate } from "uuid";
-import type { CreateEntry, CreateSection, UpdateSection, Entry, Section } from "../models/animu.model";
+import { MEDIA_TYPES, type CreateEntry, type CreateSection, type Entry, type Section, type UpdateEntry, type UpdateSection } from "../models/animu.model.ts";
 
 export function isValidUUID(value: string): boolean {
     return uuidValidate(value);
@@ -35,6 +34,13 @@ export function isValidOptionalNumber(value: number | null): boolean {
 
 export function isValidStringArray(value: string[]): boolean {
     return Array.isArray(value) && value.every(item => typeof item === "string");
+}
+
+export function validateSectionEntries(sectionEntryList: string[]): string | null {
+    if (!isValidStringArray(sectionEntryList)) {
+        return "Invalid Section Entry list";
+    }
+    return null;
 }
 
 export function validateUpdateSection(section: UpdateSection): string | null {
@@ -78,38 +84,74 @@ export function validateCreateEntry(entry: CreateEntry): string | null {
     if (!isValidString(entry.title)) {
         return "Invalid title";
     }
+    if (!MEDIA_TYPES.includes(entry.mediaType)) {
+        return "Invalid media type";
+    }
     if (typeof entry.favorite !== "boolean") {
         return "Invalid favorite";
+    }
+    if (!isValidStringArray(entry.studios)) {
+        return "Invalid array of studios";
+    }
+    if (!isValidStringArray(entry.genres)) {
+        return "Invalid array of genres";
     }
     if (!isValidUrl(entry.coverUrl)) {
         return "Invalid coverUrl";
     }
-    if (!isValidOptionalNumber(entry.current)) {
-        return "Invalid current";
+    if (!isValidOptionalNumber(entry.currentEpisode)) {
+        return "Invalid current episode";
     }
-    if (!isValidOptionalNumber(entry.total)) {
-        return "Invalid total";
+    if (!isValidOptionalNumber(entry.totalEpisodes)) {
+        return "Invalid total episodes";
     }
-    if (typeof entry.current === "number" && typeof entry.total === "number" && entry.current > entry.total) {
-        return "Value current cannot exceed total";
+    if (typeof entry.currentEpisode === "number" && typeof entry.totalEpisodes === "number" 
+        && entry.currentEpisode > entry.totalEpisodes) {
+        return "Value current episode cannot exceed total episodes";
     }
     if (entry.note !== null && !isValidString(entry.note)) {
         return "Invalid note";
     }
+    if (!isValidOptionalNumber(entry.releasedAt)) {
+        return "Invalid releasedAt";
+    }
+    if (!isValidOptionalNumber(entry.startedAt)) {
+        return "Invalid startedAt";
+    }
+    if (!isValidOptionalNumber(entry.droppedAt)) {
+        return "Invalid droppedAt";
+    }
+    if (!isValidOptionalNumber(entry.rating)) {
+        return "Invalid rating";
+    }
+    if (typeof entry.rating === "number" && entry.rating >= 0 && entry.rating <= 10) {
+        return "Value rating must must be a value from 0 to 10";
+    }
+    return null;
+}
+
+
+export function validateUpdateEntry(entry: UpdateEntry): string | null {
+    const validationMessage = validateCreateEntry(entry);
+
+    if (validationMessage !== null) {
+        return validationMessage;
+    }
+    if (!isValidNumber(entry.addedAt)) {
+        return "Invalid addedAt";
+    }
+
     return null;
 }
 
 export function validateEntry(entry: Entry): string | null {
-    const validationMessage = validateCreateEntry(entry);
+    const validationMessage = validateUpdateEntry(entry);
 
     if (validationMessage !== null) {
         return validationMessage;
     }
     if (!uuidValidate(entry.id)) {
         return "Invalid id";
-    }
-    if (!isValidNumber(entry.addedAt)) {
-        return "Invalid addedAt";
     }
 
     return null;

@@ -1,5 +1,3 @@
-
-
 export type Animu = {
     sections: Section[],
     entries: Entry[]
@@ -10,11 +8,14 @@ export type Entry = {
     title: string,
     mediaType: MediaType,
     favorite: boolean,
+    studios: string[],
+    genres: string[],
     coverUrl: string | null,
-    current: number | null,
-    total: number | null,
+    currentEpisode: number | null,
+    totalEpisodes: number | null,
     note: string | null,
     addedAt: number,
+    releasedAt: number | null,
     startedAt: number | null,
     finishedAt: number | null,
     droppedAt: number | null,
@@ -29,9 +30,16 @@ export type Section = {
 }
 
 export type MediaType = 'movie' | "tv" | "ova" | "special" | "other";
+export const MEDIA_TYPES: MediaType[] = [ 'movie', "tv", "ova", "special", "other"] as const;
 
 export type CreateEntry = Omit<Entry, "id" | "addedAt">;
+
+export type UpdateEntry = Omit<Entry, "id">;
 
 export type CreateSection = Omit<Section, "id" | "entryIds">;
 
 export type UpdateSection = Pick<Section, "label">;
+
+export type SectionEntries = {
+    entryIds: string[]
+} 
