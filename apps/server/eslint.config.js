@@ -12,6 +12,10 @@ export default defineConfig([
       tseslint.configs.recommended,
     ],
     languageOptions: {
+      parserOptions: {
+        project: "./tsconfig.json",
+        tsconfigRootDir: import.meta.dirname,
+      },
       globals: globals.browser,
     },
     rules: {
