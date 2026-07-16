@@ -30,7 +30,7 @@ export type Section = {
     entryIds: string[]
 }
 
-export type GroupTypes = 'watching' | 'watched' | 'backlog' | 'other';
+export type GroupTypes = 'watching' | 'watched' | 'backlog' | 'other'; 
 export const GROUP_TYPES: GroupTypes[] = ['watching', 'watched', 'backlog', 'other'] as const;
 
 export type MediaType = 'movie' | "tv" | "ova" | "special" | "other";
