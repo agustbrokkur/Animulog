@@ -1,9 +1,9 @@
 import { useMemo } from "react";
 import { useAnimu } from "../../../hooks/useAnime";
-import { GROUP_TYPES, type GroupTypes } from "../../../types/animu";
+import { GROUP_TYPES, type GroupType } from "../../../types/animu";
 
 interface Count {
-    name: GroupTypes;
+    name: GroupType;
     size: number;
 }
 
@@ -16,7 +16,7 @@ export const SidebarHeader = () => {
         return GROUP_TYPES.map(group => ({
             name: group,
             size: animu.sections
-                .filter(section => section.groups.includes(group))
+                .filter(section => section.group === group)
                 .reduce((total, section) => total + section.entryIds.length, 0),
         }));
     }, [animu, isLoading]);

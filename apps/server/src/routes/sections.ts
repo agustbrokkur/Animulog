@@ -43,7 +43,7 @@ sectionRouter.post("/", (req: Request<any, any, CreateSection>, res: Response) =
         const newSection: Section = {
             id: generateUniqueId(sectionIds),
             label: createdSection.label,
-            groups: createdSection.groups,
+            group: createdSection.group,
             system: createdSection.system,
             entryIds: []
         }
@@ -122,10 +122,10 @@ sectionRouter.put("/sections/:id", (req: Request<{ id: string }, any, UpdateSect
 
         const oldSectionName = existingSection.label;
         const newSectionName = updatedSection.label;
-        const newGroups = updatedSection.groups;
+        const newGroup = updatedSection.group;
         
         existingSection.label = newSectionName;
-        existingSection.groups = newGroups;
+        existingSection.group = newGroup;
         writeAnimuData(data);
 
         const returnMessage = oldSectionName === newSectionName 
