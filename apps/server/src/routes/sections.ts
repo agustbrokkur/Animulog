@@ -43,6 +43,7 @@ sectionRouter.post("/", (req: Request<any, any, CreateSection>, res: Response) =
         const newSection: Section = {
             id: generateUniqueId(sectionIds),
             label: createdSection.label,
+            groups: createdSection.groups,
             system: createdSection.system,
             entryIds: []
         }
@@ -120,13 +121,19 @@ sectionRouter.put("/sections/:id", (req: Request<{ id: string }, any, UpdateSect
         }
 
         const oldSectionName = existingSection.label;
-        const newSectionName = updatedSection.label
+        const newSectionName = updatedSection.label;
+        const newGroups = updatedSection.groups;
         
         existingSection.label = newSectionName;
+        existingSection.groups = newGroups;
         writeAnimuData(data);
 
+        const returnMessage = oldSectionName === newSectionName 
+            ? `Updated section ${newSectionName}` 
+            : `Updated section ${oldSectionName} (previously "${newSectionName})"`;
+
         res.status(200).json({
-            message: `Renamed section "${oldSectionName}" to "${newSectionName}"`,
+            message: returnMessage,
             ok: true,
         });
     } catch (error: unknown) {

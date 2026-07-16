@@ -25,12 +25,16 @@ export type Entry = {
 export type Section = {
     id: string,
     label: string,
+    groups: GroupTypes[],
     system: boolean,
     entryIds: string[]
 }
 
+export type GroupTypes = 'watching' | 'watched' | 'backlog' | 'other';
+export const GROUP_TYPES: GroupTypes[] = ['watching', 'watched', 'backlog', 'other'] as const;
+
 export type MediaType = 'movie' | "tv" | "ova" | "special" | "other";
-export const MEDIA_TYPES: MediaType[] = [ 'movie', "tv", "ova", "special", "other"] as const;
+export const MEDIA_TYPES: MediaType[] = ['movie', "tv", "ova", "special", "other"] as const;
 
 export type CreateEntry = Omit<Entry, "id" | "addedAt">;
 
@@ -38,7 +42,7 @@ export type UpdateEntry = Omit<Entry, "id">;
 
 export type CreateSection = Omit<Section, "id" | "entryIds">;
 
-export type UpdateSection = Pick<Section, "label">;
+export type UpdateSection = Pick<Section, "label" | "groups">;
 
 export type SectionEntries = {
     entryIds: string[]

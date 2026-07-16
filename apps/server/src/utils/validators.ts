@@ -1,5 +1,5 @@
 import { validate as uuidValidate } from "uuid";
-import { MEDIA_TYPES, type CreateEntry, type CreateSection, type Entry, type Section, type UpdateEntry, type UpdateSection } from "../models/animu.model.ts";
+import { MEDIA_TYPES, GROUP_TYPES, type CreateEntry, type CreateSection, type Entry, type Section, type UpdateEntry, type UpdateSection, type GroupTypes } from "../models/animu.model.ts";
 
 export function isValidUUID(value: string): boolean {
     return uuidValidate(value);
@@ -36,9 +36,24 @@ export function isValidStringArray(value: string[]): boolean {
     return Array.isArray(value) && value.every(item => typeof item === "string");
 }
 
+export function isValidGroupList(group: GroupTypes[]): boolean {
+    if (!isValidStringArray(group)) {
+        return false;
+    }
+    if (group.length === 0) {
+        return true;
+    }
+    for (const item of group) {
+        if (!GROUP_TYPES.includes(item)) {
+            return false;
+        }
+    }
+    return true;
+}
+
 export function validateSectionEntries(sectionEntryList: string[]): string | null {
     if (!isValidStringArray(sectionEntryList)) {
-        return "Invalid Section Entry list";
+        return "Invalid section entry list";
     }
     return null;
 }
@@ -49,6 +64,9 @@ export function validateUpdateSection(section: UpdateSection): string | null {
     }
     if (!isValidString(section.label)) {
         return "Invalid section label"
+    }
+    if (!isValidGroupList(section.groups)) {
+        return "Invalid section groups list";
     }
     return null;
 }
