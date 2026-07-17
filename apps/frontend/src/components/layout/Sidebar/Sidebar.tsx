@@ -39,6 +39,12 @@ export const Sidebar = () => {
                     ))
                 }
             </div>
+            <div>
+                <div>Search</div>
+                <div>Statistics</div>
+                <div>Cover Manager</div>
+                <div>Settings</div>
+            </div>
         </Aside>
     )
 } 
