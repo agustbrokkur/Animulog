@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { useAnimu } from "../../hooks/useAnime";
 import { EntryDetail } from "./EntryDetail";
 
@@ -13,7 +14,7 @@ export const AnimuList = () => {
             <ul>
                 {animu?.sections.map(section => (
                     <div>
-                        <h1>{section.label} ({section.id})</h1>
+                        <Link to={`/sections/${section.id}`}><h1>{section.label}</h1></Link>
                         {
                             section.entryIds.map(id => (
                                 <EntryDetail key={section.label + "-" + id} entry={animu?.entries.find(x => x.id == id) ?? null}  />

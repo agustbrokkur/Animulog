@@ -3,11 +3,13 @@ import { useAnimu } from "../../../hooks/useAnime";
 import { GROUP_TYPE_MAPPINGS, GROUP_TYPES, type GroupType } from "../../../types/animu";
 import { Aside } from "../../ui/Aside"
 import { SidebarHeader } from "./SidebarHeader"
+import { Link } from "react-router-dom";
 
 interface Grouping {
     name: string;
     type: GroupType;
     count: number;
+    path: string;
 }
 
 export const Sidebar = () => {
@@ -19,7 +21,8 @@ export const Sidebar = () => {
         return animu.sections.map(section => ({
             name: section.label,
             type: section.group,
-            count: section.entryIds.length
+            count: section.entryIds.length,
+            path: `/sections/${section.id}`
         }));
     }, [animu, isLoading]);
     
@@ -32,7 +35,9 @@ export const Sidebar = () => {
                         <div>
                             <div>{GROUP_TYPE_MAPPINGS[groupType]}</div>
                             {grouping.filter(group => group.type === groupType).map(item => (
-                                <div>{item.name}: {item.count}</div>
+                                <div>
+                                    <Link to={item.path}><span>{item.name}: {item.count}</span></Link>
+                                </div>
                             ))}
                             -----------------------------------------------
                         </div>

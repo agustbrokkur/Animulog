@@ -1,4 +1,4 @@
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { EntryDetail } from "../components/layout/EntryDetail";
 import { useAnimu } from "../hooks/useAnime";
 
@@ -16,7 +16,7 @@ export const SectionView = () => {
             <div>Section View</div>
             <ul>
                 <div>
-                    <h1>{sectionData?.label}</h1>
+                    <Link to={`/sections/${sectionData?.id}`}><h1>{sectionData?.label}</h1></Link>
                     {
                         sectionData?.entryIds.map(id => (
                             <EntryDetail key={sectionData.label + "-" + id} entry={animu?.entries.find(x => x.id == id) ?? null}  />

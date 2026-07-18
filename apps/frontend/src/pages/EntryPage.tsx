@@ -1,4 +1,4 @@
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { EntryDetail } from "../components/layout/EntryDetail"
 import { useAnimu } from "../hooks/useAnime";
 
@@ -13,7 +13,7 @@ export const EntryView = () => {
     
     return (
         <div>
-            <div>Entry View</div>
+            <Link to={`/anime/${animeData?.id}`}><div>Entry View</div></Link>
             <EntryDetail entry={animeData}  />
         </div>
     )

@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import type { Entry } from '../../types/animu'
 
 interface EntryDetailProps {
@@ -15,7 +16,7 @@ export const EntryDetail = ({ entry }: EntryDetailProps) => {
                 <img className='w-full h-full object-cover block trans transition-transform duration-200 ease-out hover:scale-[1.03]' src={entry.coverUrl ?? undefined} />
             </div>
             <div className='grid grid-cols-4 justify-between gap-4'>
-                <span>{entry.title} ({entry.mediaType.toUpperCase()})</span>
+                <Link to={`/anime/${entry.id}`}><span>{entry.title} ({entry.mediaType.toUpperCase()})</span></Link>
                 <span>Favorite: {entry.favorite ?? 'False'}</span>
                 <span>Studios: {entry.studios.join(", ")}</span>
                 <span>Genres: {entry.genres.join(", ")}</span>
