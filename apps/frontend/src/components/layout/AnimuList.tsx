@@ -13,7 +13,7 @@ export const AnimuList = () => {
             <h2>Entries</h2>
             <ul>
                 {animu?.sections.map(section => (
-                    <div>
+                    <div key={section.id}>
                         <Link to={`/sections/${section.id}`}><h1>{section.label}</h1></Link>
                         {
                             section.entryIds.map(id => (

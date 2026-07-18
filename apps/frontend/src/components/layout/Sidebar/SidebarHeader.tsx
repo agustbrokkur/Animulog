@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useAnimu } from "../../../hooks/useAnime";
-import { GROUP_TYPES, type GroupType } from "../../../types/animu";
+import { type GroupType, GROUP_TYPES } from "../../../types/groupType";
 
 interface Count {
     name: GroupType;
