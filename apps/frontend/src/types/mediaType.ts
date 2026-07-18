@@ -10,3 +10,11 @@ export const MEDIA_ICONS: Record<MediaType, LucideIcon> = {
   special: Star,
   other: Shapes
 };
+
+export const MEDIA_TYPE_COLORS: Record<MediaType, string> = {
+  movie: '#7F77DD',
+  tv: '#1D9E75',
+  ova: '#D4537E',
+  special: '#FAC775',
+  other: '#3FB6C7',
+};

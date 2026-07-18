@@ -15,3 +15,10 @@ export const GROUP_ICONS: Record<GroupType, LucideIcon> = {
   watched: CheckCircle2,
   other: Diamond,
 };
+
+export const GROUP_COLORS: Record<GroupType, string> = {
+  watching: '#378ADD',
+  backlog: '#EF9F27',
+  watched: '#5DCAA5',
+  other: '#5B5FC7',
+};

@@ -3,7 +3,7 @@ import { useAnimu } from "../../../hooks/useAnime";
 
 export const Breadcrumb = () => {
     const { animeId, sectionId } = useParams();
-    const { data: animu, isLoading, isError } = useAnimu();
+    const { data: animu } = useAnimu();
 
     const entryItem = animeId 
         ? animu?.entries.find(entry => entry.id === animeId) 

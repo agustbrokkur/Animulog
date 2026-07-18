@@ -1,4 +1,4 @@
-import { Link, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { useAnimu } from "../../../hooks/useAnime";
 import { Breadcrumb } from "./Breadcrumb";
 
@@ -9,7 +9,7 @@ interface Crumbs {
 
 export const Toolbar = () => {
     const { animeId, sectionId } = useParams();
-    const { data: animu, isLoading, isError } = useAnimu();
+    const { data: animu } = useAnimu();
     console.log(animeId, sectionId);
 
     const crumbs: Crumbs[] = [{ name: "Overview", path: "/" }];

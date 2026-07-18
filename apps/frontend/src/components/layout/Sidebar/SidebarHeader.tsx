@@ -2,20 +2,20 @@ import { useMemo } from "react";
 import { useAnimu } from "../../../hooks/useAnime";
 import { type GroupType, GROUP_TYPES } from "../../../types/groupType";
 
-interface Count {
+interface GroupCount {
     name: GroupType;
-    size: number;
+    count: number;
 }
 
 export const SidebarHeader = () => {
     const { data: animu, isLoading } = useAnimu();
 
-    const counts = useMemo<Count[]>(() => {
+    const counts = useMemo<GroupCount[]>(() => {
         if (!animu) return [];
 
         return GROUP_TYPES.map(group => ({
             name: group,
-            size: animu.sections
+            count: animu.sections
                 .filter(section => section.group === group)
                 .reduce((total, section) => total + section.entryIds.length, 0),
         }));
@@ -27,13 +27,11 @@ export const SidebarHeader = () => {
                 Animulog
             </div>
 
-            {
-                counts.map(x => (
-                    <div key={x.name}>
-                        <div>{x.name}: {x.size}</div>
-                    </div>
-                ))
-            }
+            {counts.map(x => (
+                <div key={x.name}>
+                    <div>{x.count} {x.name}</div>
+                </div>
+            ))}
         </div>
     )
 } 
