@@ -1,5 +1,5 @@
 import { type Request, type Response, Router } from "express";
-import type { CreateSection, UpdateSection, Section, SectionEntries } from "../models/animu.model.ts";
+import type { CreateSection, UpdateSection, Section, SectionEntries } from "../models/section.model.ts";
 import { isValidUUID, validateCreateSection, validateSectionEntries, validateUpdateSection } from "../utils/validators.ts";
 import { generateUniqueId } from "../utils/generators.ts";
 import { handleError } from "../utils/errorUtils.ts";

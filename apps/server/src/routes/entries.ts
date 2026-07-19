@@ -1,5 +1,6 @@
 import { type Request, type Response, Router } from "express";
-import type { Animu, CreateEntry, Entry, UpdateEntry } from "../models/animu.model.ts";
+import type { Animu } from "../models/animu.model.ts";
+import type { CreateEntry, Entry, UpdateEntry } from "../models/entry.model.ts";
 import { isValidUUID, validateCreateEntry, validateUpdateEntry, } from "../utils/validators.ts";
 import { generateUniqueId } from "../utils/generators.ts";
 import { handleError } from "../utils/errorUtils.ts";
