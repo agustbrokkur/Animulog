@@ -1,6 +1,6 @@
 import { type Request, type Response, Router } from "express";
 import type { Animu } from "../models/animu.model.ts";
-import type { CreateEntry, Entry, UpdateEntry } from "../models/entry.model.ts";
+import { EMPTY_SOURCE, type CreateEntry, type Entry, type UpdateEntry } from "../models/entry.model.ts";
 import { isValidUUID, validateCreateEntry, validateUpdateEntry, } from "../utils/validators.ts";
 import { generateUniqueId } from "../utils/generators.ts";
 import { handleError } from "../utils/errorUtils.ts";
@@ -41,6 +41,7 @@ entryRouter.post("/", (req: Request<any, any, CreateEntry>, res: Response) => {
             ...createdEntry,
             id: newId,
             addedAt: newAddedAt,
+            source: EMPTY_SOURCE
         };
 
         const newData: Animu = {
@@ -113,7 +114,10 @@ entryRouter.put("/:id", (req: Request<{ id: string }, any, UpdateEntry>, res: Re
             });
         }
 
-        data.entries = data.entries.map(entry => entry.id == id ? { id: id, ...updatedEntry } : entry);
+        data.entries = data.entries.map(entry => 
+            entry.id == id 
+            ? { id: id, ...updatedEntry, source: existingEntry.source } 
+            : entry);
 
         writeAnimuData(data);
         res.status(201).json({ ok: true });

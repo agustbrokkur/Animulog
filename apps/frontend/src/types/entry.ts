@@ -4,11 +4,14 @@ export type EntrySource = {
     englishTitle: string;
     japaneseTitle: string;
     synopsis: string;
+
     studios: string[];
     genres: string[];
+
     coverUrl: string | null;
     totalEpisodes: number | null;
     rating: number | null;
+    
     airedFrom: number | null;
     airedTo: number | null;
     fetchedAt: number | null;
@@ -24,7 +27,6 @@ export type Entry = {
   rating: number | null;
   coverUrl: string | null;
   relatedEntryIds: string[];
-
   currentEpisode: number | null;
 
   addedAt: number;

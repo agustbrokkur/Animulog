@@ -1,12 +1,22 @@
 import { validate as uuidValidate } from "uuid";
-import { MEDIA_TYPES, GROUP_TYPES, type CreateEntry, type CreateSection, type Entry, type Section, type UpdateEntry, type UpdateSection, type GroupType } from "../models/animu.model.ts";
+import { MEDIA_TYPES, GROUP_TYPES } from "../models/animu.model.ts";
+import type { CreateEntry, UpdateEntry, Entry, EntrySource } from "../models/entry.model.ts";
+import type { UpdateSection, CreateSection, Section } from "../models/section.model.ts";
 
 export function isValidUUID(value: string): boolean {
     return uuidValidate(value);
 }
 
+export function isValidUUIDArray(value: string[]): boolean {
+    return Array.isArray(value) && value.every(item => typeof item === "string" && isValidUUID(item));
+}
+
 export function isValidString(value: string): boolean {
     return value !== null && value !== undefined && value.trim().length > 0;
+}
+
+export function isValidStringArray(value: string[]): boolean {
+    return Array.isArray(value) && value.every(item => typeof item === "string");
 }
 
 export function isValidUrl(url: string | null): boolean {
@@ -32,12 +42,8 @@ export function isValidOptionalNumber(value: number | null): boolean {
     return Number.isFinite(value) && value >= 0;
 }
 
-export function isValidStringArray(value: string[]): boolean {
-    return Array.isArray(value) && value.every(item => typeof item === "string");
-}
-
 export function validateSectionEntries(sectionEntryList: string[]): string | null {
-    if (!isValidStringArray(sectionEntryList)) {
+    if (!isValidUUIDArray(sectionEntryList)) {
         return "Invalid section entry list";
     }
     return null;
@@ -74,7 +80,7 @@ export function validateSection(section: Section): string | null {
     if (validationMessage !== null) {
         return validationMessage;
     }
-    if (!isValidStringArray(section.entryIds)) {
+    if (!isValidUUIDArray(section.entryIds)) {
         return "Invalid array of Entry Ids";
     }
     return null;
@@ -93,46 +99,37 @@ export function validateCreateEntry(entry: CreateEntry): string | null {
     if (typeof entry.favorite !== "boolean") {
         return "Invalid favorite";
     }
-    if (!isValidStringArray(entry.studios)) {
-        return "Invalid array of studios";
-    }
-    if (!isValidStringArray(entry.genres)) {
-        return "Invalid array of genres";
-    }
-    if (!isValidUrl(entry.coverUrl)) {
-        return "Invalid coverUrl";
-    }
-    if (!isValidOptionalNumber(entry.currentEpisode)) {
-        return "Invalid current episode";
-    }
-    if (!isValidOptionalNumber(entry.totalEpisodes)) {
-        return "Invalid total episodes";
-    }
-    if (typeof entry.currentEpisode === "number" && typeof entry.totalEpisodes === "number" 
-        && entry.currentEpisode > entry.totalEpisodes) {
-        return "Value current episode cannot exceed total episodes";
-    }
     if (entry.note !== null && !isValidString(entry.note)) {
         return "Invalid note";
     }
-    if (!isValidOptionalNumber(entry.releasedAt)) {
-        return "Invalid releasedAt";
-    }
-    if (!isValidOptionalNumber(entry.startedAt)) {
-        return "Invalid startedAt";
-    }
-    if (!isValidOptionalNumber(entry.droppedAt)) {
-        return "Invalid droppedAt";
-    }
+    
     if (!isValidOptionalNumber(entry.rating)) {
         return "Invalid rating";
     }
     if (typeof entry.rating === "number" && entry.rating >= 0 && entry.rating <= 10) {
         return "Value rating must must be a value from 0 to 10";
     }
+    if (!isValidUrl(entry.coverUrl)) {
+        return "Invalid coverUrl";
+    }
+    if (!isValidUUIDArray(entry.relatedEntryIds)) {
+        return "Invalid array of Entry Ids";
+    }
+    if (!isValidOptionalNumber(entry.currentEpisode)) {
+        return "Invalid current episode";
+    }
+    
+    if (!isValidOptionalNumber(entry.startedAt)) {
+        return "Invalid startedAt";
+    }
+    if (!isValidOptionalNumber(entry.finishedAt)) {
+        return "Invalid finishedAt";
+    }
+    if (!isValidOptionalNumber(entry.droppedAt)) {
+        return "Invalid droppedAt";
+    }
     return null;
 }
-
 
 export function validateUpdateEntry(entry: UpdateEntry): string | null {
     const validationMessage = validateCreateEntry(entry);
@@ -142,6 +139,44 @@ export function validateUpdateEntry(entry: UpdateEntry): string | null {
     }
     if (!isValidNumber(entry.addedAt)) {
         return "Invalid addedAt";
+    }
+
+    return null;
+}
+
+export function validateEntrySource(entrySource: EntrySource): string | null {
+    if (!isValidString(entrySource.englishTitle)) {
+        return "Invalid English Title";
+    }
+    if (!isValidString(entrySource.japaneseTitle)) {
+        return "Invalid Japanese Title";
+    }
+    if (!isValidString(entrySource.synopsis)) {
+        return "Invalid Synopsis";
+    }
+    
+    if (!isValidStringArray(entrySource.studios)) {
+        return "Invalid studios list";
+    }
+    if (!isValidStringArray(entrySource.genres)) {
+        return "Invalid genres list";
+    }
+    
+    if (!isValidUrl(entrySource.coverUrl)) {
+        return "Invalid coverUrl";
+    }
+    if (!isValidOptionalNumber(entrySource.totalEpisodes)) {
+        return "Invalid current episode";
+    }
+    if (!isValidOptionalNumber(entrySource.rating)) {
+        return "Invalid rating";
+    }
+
+    if (!isValidOptionalNumber(entrySource.airedFrom)) {
+        return "Invalid startedAt";
+    }
+    if (!isValidOptionalNumber(entrySource.airedTo)) {
+        return "Invalid finishedAt";
     }
 
     return null;
