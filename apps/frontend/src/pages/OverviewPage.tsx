@@ -1,9 +1,9 @@
-import { AnimuList } from "../components/layout/AnimuList"
+import { AnimuList } from "../components/layout/AnimuList";
 
 export const Overview = () => {
-    return (
-        <>
-            <AnimuList />
-        </>
-    )
-}
+	return (
+		<>
+			<AnimuList />
+		</>
+	);
+};

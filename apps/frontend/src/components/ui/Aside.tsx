@@ -1,11 +1,17 @@
-import { type ReactNode } from 'react'
+import styled from "styled-components";
+import { type ReactNode } from "react";
+
+const StyledAside = styled.aside`
+	width: 240px;
+	min-width: 240px;
+	border-right: 1px solid #2a2a2e;
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+`;
 
 interface AsideProps {
-  children: ReactNode
+	children: ReactNode;
 }
 
-export const Aside = ({ children }: AsideProps) => (
-  <aside className="w-60 min-w-60 border-r border-[#2a2a2e] flex flex-col overflow-hidden">
-    {children}
-  </aside>
-)
+export const Aside = ({ children }: AsideProps) => <StyledAside>{children}</StyledAside>;

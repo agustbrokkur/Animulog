@@ -1,0 +1,48 @@
+import styled from "styled-components";
+import { Link } from "react-router-dom";
+import { Star } from "lucide-react";
+
+const Wrap = styled(Link)`
+	display: block;
+	width: 225px;
+	min-width: 225px;
+	aspect-ratio: 2 / 3;
+
+	// align-self: stretch;
+	border-radius: 6px;
+	overflow: hidden;
+	background: #242428;
+	position: relative;
+	flex-shrink: 0;
+`;
+
+const Img = styled.img`
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	transition: transform 200ms;
+`;
+
+const Placeholder = styled.div`
+	position: absolute;
+	inset: 0;
+
+	display: flex;
+	align-items: center;
+	justify-content: center;
+
+	padding: 12px;
+	text-align: center;
+
+	color: #a1a1aa;
+	font-size: 0.9rem;
+	font-weight: 500;
+`;
+
+export const EntryCover = ({ src, title, to, favorite }: { src?: string; title: string; to: string; favorite?: boolean }) => (
+	<Wrap to={to} className="cover">
+		<Img src={src} />
+		{src ? <Img src={src} alt={title} /> : <Placeholder>{title}</Placeholder>}
+		{favorite && <Star size={14} fill="#fbbf24" color="#fbbf24" style={{ position: "absolute", top: 6, right: 6 }} />}
+	</Wrap>
+);

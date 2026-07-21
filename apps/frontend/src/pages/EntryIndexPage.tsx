@@ -1,3 +1,3 @@
 export const EntriesIndexView = () => {
-    return <div>Entry Index View</div>
-}
+	return <div>Entry Index View</div>;
+};

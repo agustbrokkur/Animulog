@@ -1,9 +1,9 @@
-import type { GroupType } from "./groupType"
+import type { GroupType } from "./groupType";
 
 export type Section = {
-    id: string,
-    label: string,
-    group: GroupType,
-    system: boolean,
-    entryIds: string[]
-}
+	id: string;
+	label: string;
+	group: GroupType;
+	system: boolean;
+	entryIds: string[];
+};

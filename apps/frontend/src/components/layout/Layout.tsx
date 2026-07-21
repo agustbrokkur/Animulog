@@ -1,17 +1,38 @@
+import styled from "styled-components";
 import { Outlet } from "react-router-dom";
 import { Sidebar } from "./Sidebar/Sidebar";
 import { Toolbar } from "./Toolbar/Toolbar";
 
+const Container = styled.div`
+	display: flex;
+	height: 100vh;
+	overflow: hidden;
+	background: #141416;
+`;
+
+const Content = styled.div`
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+	min-width: 0;
+`;
+
+const Main = styled.main`
+	flex: 1;
+	min-height: 0;
+	overflow-y: auto;
+`;
+
 export const Layout = () => {
-  return (
-    <div className="flex h-screen overflow-hidden bg-[#141416]">
-      <Sidebar />
-      <div className="flex flex-col flex-1 min-w-0">
-        <Toolbar />
-        <main className="flex-1 min-h-0 overflow-y-auto">
-          <Outlet />
-        </main>
-      </div>
-    </div>
-  )
-}
+	return (
+		<Container>
+			<Sidebar />
+			<Content>
+				<Toolbar />
+				<Main>
+					<Outlet />
+				</Main>
+			</Content>
+		</Container>
+	);
+};
