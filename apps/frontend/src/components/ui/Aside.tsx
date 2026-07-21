@@ -4,7 +4,9 @@ import { type ReactNode } from "react";
 const StyledAside = styled.aside`
 	width: 240px;
 	min-width: 240px;
-	border-right: 1px solid #2a2a2e;
+	height: 100%;
+	min-height: 0;
+	border-right: 1px solid var(--border);
 	display: flex;
 	flex-direction: column;
 	overflow: hidden;

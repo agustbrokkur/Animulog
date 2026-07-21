@@ -22,14 +22,13 @@ export const GlobalStyle = createGlobalStyle`
         --border: #2a2a2e;
     }
 
+    html, body, #root {
+        height: 100%;
+    }
+
     * {
         box-sizing: border-box;
         margin: 0;
         padding: 0;
-    }
-
-    body {
-        background: var(--bg-base);
-        font-family: system-ui, -apple-system, sans-serif;
     }
 `;

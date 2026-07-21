@@ -14,7 +14,7 @@ const NavLink = styled(Link)`
 	gap: 10px;
 	padding: 8px 10px;
 	border-radius: 6px;
-	font-size: 14px;
+	font-size: 16px;
 	color: #9ca3af;
 	transition:
 		background 150ms,

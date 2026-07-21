@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import styled from "styled-components";
 import { useAnimu } from "../../../hooks/useAnime";
 import { type GroupType, GROUP_TYPES, GROUP_TYPE_MAPPINGS, GROUP_COLOR_VARS } from "../../../types/groupType";
+import { Link } from "react-router-dom";
 
 interface GroupCount {
 	name: GroupType;
@@ -9,19 +10,25 @@ interface GroupCount {
 }
 
 const Wrap = styled.div`
+	display: flex;
+	flex-direction: column;
+	gap: 0px;
 	padding: 20px 16px 16px;
 	border-bottom: 1px solid var(--border);
 	flex-shrink: 0;
 `;
 
-const Logo = styled.div`
+const Logo = styled(Link)`
+	display: block
 	cursor: pointer;
 	color: var(--color-brand);
-	font-size: 32px;
+	font-size: 36px;
 	font-weight: 700;
 	letter-spacing: 3px;
+	line-height: normal;
 	transition: opacity 150ms;
 	margin-bottom: 14px;
+	text-decoration: none;
 
 	&:hover {
 		opacity: 0.75;
@@ -69,7 +76,7 @@ export const SidebarHeader = () => {
 
 	return (
 		<Wrap>
-			<Logo>Animulog</Logo>
+			<Logo to={"/"}>Animulog</Logo>
 
 			<CountColumn>
 				{counts.map((x) => (

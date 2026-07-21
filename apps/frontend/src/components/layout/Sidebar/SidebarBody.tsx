@@ -1,7 +1,7 @@
 import styled from "styled-components";
 import { Link } from "react-router-dom";
-import { GROUP_TYPES, GROUP_ICONS, GROUP_TYPE_MAPPINGS, type GroupType } from "../../../types/groupType";
 import { useMemo } from "react";
+import { GROUP_TYPES, GROUP_ICONS, GROUP_TYPE_MAPPINGS, GROUP_COLOR_VARS, type GroupType } from "../../../types/groupType";
 import { useAnimu } from "../../../hooks/useAnime";
 
 interface Grouping {
@@ -11,33 +11,80 @@ interface Grouping {
 	path: string;
 }
 
-const GroupBlock = styled.div`
-	margin-bottom: 16px;
+const Body = styled.div`
+	flex: 1;
+	min-height: 0;
+	overflow-y: auto;
+	padding: 12px 8px;
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
 `;
 
-const GroupHeader = styled.div`
+const GroupBlock = styled.div<{ $color: string }>`
+	flex-shrink: 0;
+	border-radius: 10px;
+	background: color-mix(in srgb, ${({ $color }) => $color} 6%, transparent);
+	border: 1px solid color-mix(in srgb, ${({ $color }) => $color} 18%, transparent);
+	overflow: hidden;
+`;
+
+const GroupHeader = styled.div<{ $color: string }>`
 	display: flex;
 	align-items: center;
 	gap: 8px;
-	color: #d1d5db;
-	font-weight: 500;
-	margin-bottom: 4px;
+	color: ${({ $color }) => $color};
+	font-size: 16px;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	padding: 10px 12px 6px;
 `;
 
 const SectionList = styled.div`
-	padding-left: 24px;
-	border: 1px solid #2a2a2e;
-	margin: 0 8px;
+	display: flex;
+	flex-direction: column;
+	padding: 0 6px 6px;
 `;
 
-const SectionLink = styled(Link)`
-	display: block;
-	font-size: 14px;
-	color: #9ca3af;
-	padding: 2px 0;
+const SectionLink = styled(Link)<{ $color: string }>`
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	color: #d1d5db;
+	padding: 7px 10px;
+	border-radius: 6px;
+	text-decoration: none;
+	transition:
+		background 150ms,
+		color 150ms,
+		transform 150ms;
 
 	&:hover {
 		color: white;
+		background: color-mix(in srgb, ${({ $color }) => $color} 25%, transparent);
+		transform: translateX(2px);
+	}
+`;
+
+const SectionName = styled.span`
+	font-size: 15px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	min-width: 0;
+`;
+
+const SectionCount = styled.span<{ $color: string }>`
+	font-size: 15px;
+	font-weight: 600;
+	color: #6b6b6f;
+	font-variant-numeric: tabular-nums;
+	transition: color 150ms;
+
+	${SectionLink}:hover & {
+		color: ${({ $color }) => $color};
 	}
 `;
 
@@ -56,28 +103,30 @@ export const SidebarBody = () => {
 	}, [animu, isLoading]);
 
 	return (
-		<div>
+		<Body>
 			{GROUP_TYPES.map((groupType) => {
 				const Icon = GROUP_ICONS[groupType];
+				const color = GROUP_COLOR_VARS[groupType];
 				const sections = grouping.filter((group) => group.type === groupType);
 
 				return (
-					<GroupBlock key={groupType}>
-						<GroupHeader>
-							<Icon size={16} color="#9ca3af" />
+					<GroupBlock key={groupType} $color={color}>
+						<GroupHeader $color={color}>
+							<Icon size={14} color={color} />
 							<span>{GROUP_TYPE_MAPPINGS[groupType]}</span>
 						</GroupHeader>
 
 						<SectionList>
 							{sections.map((section) => (
-								<SectionLink key={section.path} to={section.path}>
-									{section.name}: {section.count}
+								<SectionLink key={section.path} to={section.path} $color={color} title={section.name}>
+									<SectionName>{section.name}</SectionName>
+									<SectionCount $color={color}>{section.count}</SectionCount>
 								</SectionLink>
 							))}
 						</SectionList>
 					</GroupBlock>
 				);
 			})}
-		</div>
+		</Body>
 	);
 };
