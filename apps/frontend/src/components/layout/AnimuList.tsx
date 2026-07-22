@@ -3,6 +3,8 @@ import { useAnimu } from "../../hooks/useAnime";
 import { EntryRenderer } from "../entry/EntryRenderer";
 import { EntryDetailItem } from "../entry/EntryDetailItem";
 import type { Entry } from "../../types/entry";
+import { EntryGridItem } from "../entry/EntryGridItem";
+import { EntryListItem } from "../entry/EntryListItem";
 
 export const testEntry: Entry = {
 	id: "test-mmbn-1",
@@ -53,12 +55,14 @@ export const AnimuList = () => {
 						<Link to={`/sections/${section.id}`}>
 							<h1>{section.label}</h1>
 						</Link>
+						{/* <div style={{ display: "grid", gridTemplateColumns: "repeat(10, 1fr)" }}> */}
 						{section.entryIds.map((id, index) => (
 							// <EntryDetailItem key={section.label + "-" + id} entry={testEntry} order={index + 1} sections={animu?.sections} />
-							<EntryDetailItem key={section.label + "-" + id} entry={animu?.entries.find((x) => x.id == id) ?? ({} as Entry)} />
-							// <EntryDetailItem key={section.label + "-" + id} entry={animu?.entries.find(x => x.id == id) ?? null} />
-							// <EntryRenderer key={section.label + "-" + id} entry={animu?.entries.find(x => x.id == id) ?? null}  />
+							// <EntryDetailItem key={section.label + "-" + id} entry={animu?.entries.find((x) => x.id == id) ?? ({} as Entry)} />
+							// <EntryGridItem key={section.label + "-" + id} entry={animu?.entries.find((x) => x.id == id) ?? ({} as Entry)} />
+							<EntryListItem key={section.label + "-" + id} entry={animu?.entries.find((x) => x.id == id) ?? ({} as Entry)} />
 						))}
+						{/* </div> */}
 					</div>
 				))}
 			</ul>

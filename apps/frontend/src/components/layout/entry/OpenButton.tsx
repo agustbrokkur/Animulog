@@ -2,22 +2,40 @@ import styled from "styled-components";
 import { Link } from "react-router-dom";
 import { ExternalLink } from "lucide-react";
 
-const Btn = styled(Link)`
+const Btn = styled(Link)<{ $transparent?: boolean }>`
 	display: flex;
 	align-items: center;
+	justify-content: center;
 	gap: 4px;
 	font-size: 12px;
-	padding: 4px 8px;
+	font-weight: 600;
+	padding: 6px 8px;
 	border-radius: 6px;
-	background: var(--color-brand, #e8473f);
-	color: white;
-	&:hover {
-		opacity: 0.9;
-	}
+	transition:
+		background 150ms,
+		opacity 150ms;
+
+	${({ $transparent }) =>
+		$transparent
+			? `
+        background: rgb(255 255 255 / 0.12);
+        color: white;
+        &:hover { background: rgb(255 255 255 / 0.2); }
+      `
+			: `
+        background: var(--color-brand);
+        color: white;
+        &:hover { opacity: 0.9; }
+      `}
 `;
 
-export const OpenButton = ({ to }: { to: string }) => (
-	<Btn to={to}>
+interface OpenButtonProps {
+	to: string;
+	transparent?: boolean;
+}
+
+export const OpenButton = ({ to, transparent }: OpenButtonProps) => (
+	<Btn to={to} $transparent={transparent}>
 		Open <ExternalLink size={12} />
 	</Btn>
 );

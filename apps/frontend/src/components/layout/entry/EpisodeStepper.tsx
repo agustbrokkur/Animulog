@@ -1,22 +1,33 @@
 import styled from "styled-components";
 import { Minus, Plus } from "lucide-react";
 
-const Wrap = styled.div`
+const Wrap = styled.div<{ $transparent?: boolean }>`
 	display: flex;
 	align-items: center;
-	gap: 2px;
-	background: #1c1c1f;
-	border: 1px solid #2a2a2e;
+	justify-content: center;
+	gap: 4px;
 	border-radius: 6px;
-	padding: 0 4px;
+	padding: 4px 6px;
+
+	${({ $transparent }) =>
+		$transparent
+			? `
+        background: rgb(255 255 255 / 0.12);
+        border: none;
+      `
+			: `
+        background: var(--bg-surface);
+        border: 1px solid var(--border);
+      `}
 `;
 
 const Btn = styled.button`
 	padding: 4px;
-	color: #9ca3af;
+	color: #d1d5db;
 	background: none;
 	border: none;
 	cursor: pointer;
+
 	&:hover {
 		color: white;
 	}
@@ -24,13 +35,21 @@ const Btn = styled.button`
 
 const Count = styled.span`
 	font-size: 12px;
-	color: #d1d5db;
-	width: 40px;
+	font-weight: 600;
+	color: white;
+	min-width: 40px;
 	text-align: center;
 `;
 
-export const EpisodeStepper = ({ current, total, onChange }: { current: number; total?: number; onChange?: (delta: number) => void }) => (
-	<Wrap>
+interface EpisodeStepperProps {
+	current: number;
+	total?: number;
+	onChange?: (delta: number) => void;
+	transparent?: boolean;
+}
+
+export const EpisodeStepper = ({ current, total, onChange, transparent }: EpisodeStepperProps) => (
+	<Wrap $transparent={transparent}>
 		<Btn onClick={() => onChange?.(-1)}>
 			<Minus size={13} />
 		</Btn>
