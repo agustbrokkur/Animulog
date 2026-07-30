@@ -4,6 +4,7 @@ import { Star } from "lucide-react";
 import type { Entry } from "../../types/entry";
 import { EpisodeStepper } from "../layout/entry/EpisodeStepper";
 import { OpenButton } from "../layout/entry/OpenButton";
+import React from "react";
 
 const Wrap = styled.div`
 	display: flex;
@@ -16,7 +17,7 @@ const Card = styled.div`
 	aspect-ratio: 2 / 3;
 	border-radius: 10px;
 	overflow: hidden;
-	background: var(--bg-surface-alt);
+	background: var(--bg-3);
 	border: 2px solid transparent;
 	transition: border-color 150ms;
 
@@ -89,12 +90,24 @@ const HoverScrim = styled.div`
 	}
 `;
 
+const Footer = styled.div`
+	display: flex;
+	alignitems: flex-start;
+`;
+
 const Title = styled.a`
-	font-size: 13px;
+	display: -webkit-box;
+	flex: 1;
+	font-size: 16px;
 	color: #d1d5db;
-	white-space: nowrap;
+	white-space: initial;
 	overflow: hidden;
 	text-overflow: ellipsis;
+	align-self: start;
+	text-align: start;
+
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
 
 	&:hover {
 		color: white;
@@ -105,7 +118,7 @@ interface Props {
 	entry: Entry;
 }
 
-export const EntryGridItem = ({ entry }: Props) => {
+export const EntryGridItem = React.memo(({ entry }: Props) => {
 	const coverUrl = entry.coverUrl ?? entry.source.coverUrl ?? undefined;
 	const total = entry.source.totalEpisodes;
 
@@ -131,7 +144,9 @@ export const EntryGridItem = ({ entry }: Props) => {
 				</HoverScrim>
 			</Card>
 
-			<Title href={`/anime/${entry.id}`}>{entry.title}</Title>
+			<Footer>
+				<Title href={`/anime/${entry.id}`}>{entry.title}</Title>
+			</Footer>
 		</Wrap>
 	);
-};
+});

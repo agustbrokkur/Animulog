@@ -1,10 +1,10 @@
 import type { Entry } from "../../types/entry";
-import type { Section } from "../../types/section";
 import { EntryDetailItem } from "./EntryDetailItem";
 import { EntryListItem } from "./EntryListItem";
 import { EntryGridItem } from "./EntryGridItem";
 
 export type ViewMode = "detail" | "list" | "grid";
+export const VIEW_MODES: ViewMode[] = ["detail", "list", "grid"];
 
 interface EntryRendererProps {
 	entry: Entry;

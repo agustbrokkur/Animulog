@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import styled from "styled-components";
 import { useAnimu } from "../../../hooks/useAnime";
 import { type GroupType, GROUP_TYPES, GROUP_TYPE_MAPPINGS, GROUP_COLOR_VARS } from "../../../types/groupType";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 
 interface GroupCount {
 	name: GroupType;

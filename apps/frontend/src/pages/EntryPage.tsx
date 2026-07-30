@@ -1,4 +1,4 @@
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams } from "react-router";
 import { EntryRenderer } from "../components/entry/EntryRenderer";
 import { useAnimu } from "../hooks/useAnime";
 

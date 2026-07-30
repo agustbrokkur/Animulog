@@ -1,5 +1,5 @@
 import styled from "styled-components";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { Search, BarChart3, RefreshCw, Settings } from "lucide-react";
 
 const Wrap = styled.div`
@@ -21,7 +21,7 @@ const NavLink = styled(Link)`
 		color 150ms;
 
 	&:hover {
-		background: var(--bg-surface-alt);
+		background: var(--bg-3);
 		color: white;
 	}
 `;

@@ -1,6 +1,6 @@
 // EntryCoverCompact.tsx
 import styled from "styled-components";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { Star } from "lucide-react";
 
 const Wrap = styled(Link)`
@@ -9,7 +9,7 @@ const Wrap = styled(Link)`
 	aspect-ratio: 2 / 3;
 	border-radius: 6px;
 	overflow: hidden;
-	background: var(--bg-surface-alt);
+	background: var(--bg-3);
 	position: relative;
 	flex-shrink: 0;
 `;

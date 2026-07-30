@@ -1,8 +1,9 @@
 import styled from "styled-components";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { useMemo } from "react";
 import { GROUP_TYPES, GROUP_ICONS, GROUP_TYPE_MAPPINGS, GROUP_COLOR_VARS, type GroupType } from "../../../types/groupType";
 import { useAnimu } from "../../../hooks/useAnime";
+import { CircleSmallIcon } from "lucide-react";
 
 interface Grouping {
 	name: string;
@@ -50,7 +51,7 @@ const SectionList = styled.div`
 const SectionLink = styled(Link)<{ $color: string }>`
 	display: flex;
 	align-items: center;
-	justify-content: space-between;
+	justify-content: space-around;
 	gap: 8px;
 	color: #d1d5db;
 	padding: 7px 10px;
@@ -69,11 +70,16 @@ const SectionLink = styled(Link)<{ $color: string }>`
 `;
 
 const SectionName = styled.span`
+	display: flex;
+	align-items: center;
 	font-size: 15px;
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
+	width: 100%;
 	min-width: 0;
+	text-align: start;
+	line-height: 1.6;
 `;
 
 const SectionCount = styled.span<{ $color: string }>`
@@ -82,6 +88,7 @@ const SectionCount = styled.span<{ $color: string }>`
 	color: #6b6b6f;
 	font-variant-numeric: tabular-nums;
 	transition: color 150ms;
+	margin-left: auto;
 
 	${SectionLink}:hover & {
 		color: ${({ $color }) => $color};
@@ -119,6 +126,7 @@ export const SidebarBody = () => {
 						<SectionList>
 							{sections.map((section) => (
 								<SectionLink key={section.path} to={section.path} $color={color} title={section.name}>
+									<CircleSmallIcon size={14} color={color} style={{ marginRight: "4px" }} />
 									<SectionName>{section.name}</SectionName>
 									<SectionCount $color={color}>{section.count}</SectionCount>
 								</SectionLink>

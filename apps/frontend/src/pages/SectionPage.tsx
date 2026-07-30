@@ -1,22 +1,58 @@
 import styled from "styled-components";
-import { useState } from "react";
-import { useParams } from "react-router-dom";
-import { EntryRenderer, type ViewMode } from "../components/entry/EntryRenderer";
+import { useMemo, useState } from "react";
+import { EntryRenderer, VIEW_MODES, type ViewMode } from "../components/entry/EntryRenderer";
 import { useAnimu } from "../hooks/useAnime";
+import { Filter, ArrowUpDown, SquareCheck } from "lucide-react";
+import { ViewModeSwitcher } from "../components/layout/actions/ViewModeSwitcher";
+import { SearchInput } from "../components/layout/actions/SearchInput";
+import { ToolbarButton } from "../components/layout/actions/ToolbarButton";
+import { AddButton } from "../components/layout/actions/AddButton";
 import type { Entry } from "../types/entry";
+import { useParams } from "react-router";
+import { useEntrySearch } from "../hooks/useEntrySearch";
+import { useDebouncedValue } from "../hooks/useDebouncedValue";
+
+const Wrap = styled.div`
+	overflow-y: auto;
+`;
+
+const Header = styled.div`
+	display: flex;
+	flex-direction: column;
+	justify-content: space-around;
+	align-items: start;
+	min-height: 200px;
+	height: 200px;
+	padding: 20px;
+	margin-bottom: 6px;
+	border-bottom: 1px solid var(--border);
+	border-radius: 8px;
+`;
+
+const SectionHeader = styled.div`
+	font-size: 42px;
+`;
+
+const SectionBody = styled.div`
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	width: 100%;
+`;
 
 const Container = styled.div<{ $viewMode: ViewMode }>`
 	display: ${({ $viewMode }) => ($viewMode === "grid" ? "grid" : "flex")};
 	${({ $viewMode }) =>
 		$viewMode === "grid"
 			? `
-        grid-template-columns: repeat(9, 1fr);
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
         gap: 14px;
       `
 			: `
         flex-direction: column;
         gap: ${$viewMode === "list" ? "6px" : "10px"};
       `}
+	padding: 16px 24px 24px;
 `;
 
 export const testEntry: Entry = {
@@ -57,19 +93,37 @@ export const SectionView = () => {
 	const { sectionId } = useParams();
 	const { data: animu } = useAnimu();
 	const [viewMode, setViewMode] = useState<ViewMode>("grid");
+	const [search, setSearch] = useState("");
+	const debouncedSearch = useDebouncedValue(search, 200);
 
 	const section = animu?.sections.find((s) => s.id === sectionId);
-	const entries = section?.entryIds.map((id) => animu?.entries.find((e) => e.id === id)).filter((e): e is NonNullable<typeof e> => e != null) ?? [];
+	const entries = useMemo(() => {
+		return section?.entryIds.map((id) => animu?.entries.find((e) => e.id === id)).filter((e): e is NonNullable<typeof e> => e != null) ?? [];
+	}, [section, animu]);
+	const filteredEntries = useEntrySearch(entries, debouncedSearch, "quick");
 
 	if (!section) return null;
 
 	return (
-		<div>
+		<Wrap>
+			<Header>
+				<SectionHeader>
+					{section.label} ({section.entryIds.length})
+				</SectionHeader>
+				<SectionBody>
+					<SearchInput value={search} onChange={setSearch} />
+					<ToolbarButton icon={Filter} label="Filter" />
+					<ToolbarButton icon={ArrowUpDown} label="Custom order" />
+					<ToolbarButton icon={SquareCheck} label="Select" />
+					<ViewModeSwitcher viewMode={viewMode} onViewModeChange={setViewMode} />
+					<AddButton />
+				</SectionBody>
+			</Header>
 			<Container $viewMode={viewMode}>
-				{entries.map((entry) => (
-					<EntryRenderer key={entry.id} entry={testEntry} viewMode={viewMode} />
+				{filteredEntries.map((entry) => (
+					<EntryRenderer key={entry.id} entry={entry} viewMode={viewMode} />
 				))}
 			</Container>
-		</div>
+		</Wrap>
 	);
 };

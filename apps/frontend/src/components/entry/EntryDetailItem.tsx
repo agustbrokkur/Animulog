@@ -12,6 +12,7 @@ import { EntryText } from "../layout/entry/EntryText";
 import { EntryPill } from "../layout/entry/EntryPill";
 import { Actions, Card, Info, Row } from "./EntryDetailItem.styles";
 import { useAnimu } from "../../hooks/useAnime";
+import React from "react";
 
 const STATUS_COLORS: Record<string, [string, string, string]> = {
 	watching: ["#2dd4bf", "rgba(19,78,74,0.4)", "#115e59"],
@@ -24,7 +25,7 @@ interface EntryDetailItemProps {
 	entry: Entry;
 }
 
-export const EntryDetailItem = ({ entry }: EntryDetailItemProps) => {
+export const EntryDetailItem = React.memo(({ entry }: EntryDetailItemProps) => {
 	const { data: animu } = useAnimu();
 
 	const Icon = MEDIA_ICONS[entry.mediaType];
@@ -89,4 +90,4 @@ export const EntryDetailItem = ({ entry }: EntryDetailItemProps) => {
 			</Info>
 		</Card>
 	);
-};
+});

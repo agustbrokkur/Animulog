@@ -10,6 +10,7 @@ const StyledAside = styled.aside`
 	display: flex;
 	flex-direction: column;
 	overflow: hidden;
+	background: var(--bg-2);
 `;
 
 interface AsideProps {

@@ -16,7 +16,7 @@ const Wrap = styled.div<{ $transparent?: boolean }>`
         border: none;
       `
 			: `
-        background: var(--bg-surface);
+        background: var(--bg-2);
         border: 1px solid var(--border);
       `}
 `;

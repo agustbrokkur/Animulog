@@ -10,6 +10,7 @@ import { MoveMenu } from "../layout/entry/MoveMenu";
 import { OpenButton } from "../layout/entry/OpenButton";
 import { useAnimu } from "../../hooks/useAnime";
 import { EntryCoverCompact } from "../layout/entry/EntryCoverCompact";
+import React from "react";
 
 // EntryListItem.tsx
 const Row = styled.div`
@@ -57,7 +58,7 @@ const Track = styled.div`
 	flex: 1;
 	height: 4px;
 	border-radius: 999px;
-	background: var(--bg-surface-alt);
+	background: var(--bg-3);
 	overflow: hidden;
 `;
 
@@ -93,7 +94,7 @@ interface Props {
 	entry: Entry;
 }
 
-export const EntryListItem = ({ entry }: Props) => {
+export const EntryListItem = React.memo(({ entry }: Props) => {
 	const { data: animu } = useAnimu();
 
 	const Icon = MEDIA_ICONS[entry.mediaType];
@@ -146,4 +147,4 @@ export const EntryListItem = ({ entry }: Props) => {
 			</Actions>
 		</Row>
 	);
-};
+});

@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { useAnimu } from "../../hooks/useAnime";
 import { EntryRenderer } from "../entry/EntryRenderer";
 import { EntryDetailItem } from "../entry/EntryDetailItem";

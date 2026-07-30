@@ -1,13 +1,12 @@
 import styled from "styled-components";
-import { Outlet } from "react-router-dom";
-import { Sidebar } from "./Sidebar/Sidebar";
-import { Toolbar } from "./Toolbar/Toolbar";
+import { Outlet } from "react-router";
+import { Sidebar } from "./sidebar/Sidebar";
+import { Toolbar } from "./toolbar/Toolbar";
 
 const Container = styled.div`
 	display: flex;
 	height: 100vh;
 	overflow: hidden;
-	background: #141416;
 `;
 
 const Content = styled.div`
