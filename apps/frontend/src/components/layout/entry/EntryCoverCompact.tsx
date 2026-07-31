@@ -30,7 +30,7 @@ interface EntryCoverCompactProps {
 
 export const EntryCoverCompact = ({ src, to, favorite }: EntryCoverCompactProps) => (
 	<Wrap to={to} className="cover">
-		<Img src={src} />
+		<Img src={src} loading="lazy" decoding="async" />
 		{favorite && <Star size={11} fill="#fbbf24" color="#fbbf24" style={{ position: "absolute", top: 2, right: 2 }} />}
 	</Wrap>
 );

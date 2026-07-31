@@ -125,7 +125,7 @@ export const EntryGridItem = React.memo(({ entry }: Props) => {
 	return (
 		<Wrap>
 			<Card>
-				<Img src={coverUrl} />
+				<Img src={coverUrl} loading="lazy" decoding="async" />
 
 				<ProgressBadge>
 					{entry.currentEpisode ?? 0} / {total ?? "?"}

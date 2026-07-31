@@ -11,6 +11,9 @@ import type { Entry } from "../types/entry";
 import { useParams } from "react-router";
 import { useEntrySearch } from "../hooks/useEntrySearch";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
+import { type EntryFilters, EMPTY_FILTERS } from "../types/filters";
+import { applyEntryFilters } from "../utils/applyEntryFilters";
+import { FilterMenu } from "../components/layout/actions/FilterMenu/FilterMenu";
 
 const Wrap = styled.div`
 	overflow-y: auto;
@@ -94,13 +97,16 @@ export const SectionView = () => {
 	const { data: animu } = useAnimu();
 	const [viewMode, setViewMode] = useState<ViewMode>("grid");
 	const [search, setSearch] = useState("");
+	const [filters, setFilters] = useState<EntryFilters>(EMPTY_FILTERS);
 	const debouncedSearch = useDebouncedValue(search, 200);
 
 	const section = animu?.sections.find((s) => s.id === sectionId);
 	const entries = useMemo(() => {
 		return section?.entryIds.map((id) => animu?.entries.find((e) => e.id === id)).filter((e): e is NonNullable<typeof e> => e != null) ?? [];
 	}, [section, animu]);
-	const filteredEntries = useEntrySearch(entries, debouncedSearch, "quick");
+	const searchedEntries = useEntrySearch(entries, debouncedSearch, "quick");
+	const filteredEntries = useMemo(() => applyEntryFilters(searchedEntries, filters), [searchedEntries, filters]);
+	const visibleEntryIds = useMemo(() => new Set(filteredEntries.map((e) => e.id)), [filteredEntries]);
 
 	if (!section) return null;
 
@@ -112,7 +118,7 @@ export const SectionView = () => {
 				</SectionHeader>
 				<SectionBody>
 					<SearchInput value={search} onChange={setSearch} />
-					<ToolbarButton icon={Filter} label="Filter" />
+					<FilterMenu entries={entries} filters={filters} onChange={setFilters} />
 					<ToolbarButton icon={ArrowUpDown} label="Custom order" />
 					<ToolbarButton icon={SquareCheck} label="Select" />
 					<ViewModeSwitcher viewMode={viewMode} onViewModeChange={setViewMode} />
@@ -120,8 +126,8 @@ export const SectionView = () => {
 				</SectionBody>
 			</Header>
 			<Container $viewMode={viewMode}>
-				{filteredEntries.map((entry) => (
-					<EntryRenderer key={entry.id} entry={entry} viewMode={viewMode} />
+				{searchedEntries.map((entry) => (
+					<EntryRenderer key={entry.id} entry={entry} viewMode={viewMode} hidden={!visibleEntryIds.has(entry.id)} />
 				))}
 			</Container>
 		</Wrap>
