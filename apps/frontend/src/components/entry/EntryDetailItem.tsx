@@ -23,16 +23,16 @@ const STATUS_COLORS: Record<string, [string, string, string]> = {
 
 interface EntryDetailItemProps {
 	entry: Entry;
+	order?: number;
 }
 
-export const EntryDetailItem = React.memo(({ entry }: EntryDetailItemProps) => {
+export const EntryDetailItem = React.memo(({ entry, order }: EntryDetailItemProps) => {
 	const { data: animu } = useAnimu();
 
 	const Icon = MEDIA_ICONS[entry.mediaType];
 	const coverUrl = entry.coverUrl ?? entry.source.coverUrl ?? undefined;
 	const status = entry.droppedAt ? "dropped" : entry.finishedAt ? "finished" : entry.startedAt ? "watching" : "backlog";
 	const [statusColor, statusBg, statusBorder] = STATUS_COLORS[status];
-	const order = animu?.sections.find((section) => section.entryIds.includes(entry.id))?.entryIds.indexOf(entry.id) ?? -1;
 	const sectionsList = animu?.sections ?? ([] as Section[]);
 
 	return (

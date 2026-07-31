@@ -41,8 +41,7 @@ const Placeholder = styled.div`
 
 export const EntryCover = ({ src, title, to, favorite }: { src?: string; title: string; to: string; favorite?: boolean }) => (
 	<Wrap to={to} className="cover">
-		<Img src={src} />
-		{src ? <Img src={src} alt={title} /> : <Placeholder>{title}</Placeholder>}
+		{src ? <Img src={src} alt={title} loading="lazy" decoding="async" /> : <Placeholder>{title}</Placeholder>}
 		{favorite && <Star size={14} fill="#fbbf24" color="#fbbf24" style={{ position: "absolute", top: 6, right: 6 }} />}
 	</Wrap>
 );

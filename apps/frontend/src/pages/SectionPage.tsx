@@ -112,6 +112,7 @@ export const SectionView = () => {
 	const sortedEntries = useMemo(() => sortEntries(searchedEntries, sort), [searchedEntries, sort]);
 	const filteredEntries = useMemo(() => applyEntryFilters(searchedEntries, filters), [searchedEntries, filters]);
 	const visibleEntryIds = useMemo(() => new Set(filteredEntries.map((e) => e.id)), [filteredEntries]);
+	const entryOrder = useMemo(() => new Map(section?.entryIds.map((id, index) => [id, index])), [section]);
 
 	if (!section) return null;
 
@@ -132,7 +133,13 @@ export const SectionView = () => {
 			</Header>
 			<Container $viewMode={viewMode}>
 				{sortedEntries.map((entry) => (
-					<EntryRenderer key={entry.id} entry={entry} viewMode={viewMode} hidden={!visibleEntryIds.has(entry.id)} />
+					<EntryRenderer
+						key={entry.id}
+						entry={entry}
+						viewMode={viewMode}
+						hidden={!visibleEntryIds.has(entry.id)}
+						order={entryOrder.get(entry.id)}
+					/>
 				))}
 			</Container>
 		</Wrap>

@@ -92,9 +92,10 @@ const Actions = styled.div`
 
 interface Props {
 	entry: Entry;
+	order?: number;
 }
 
-export const EntryListItem = React.memo(({ entry }: Props) => {
+export const EntryListItem = React.memo(({ entry, order }: Props) => {
 	const { data: animu } = useAnimu();
 
 	const Icon = MEDIA_ICONS[entry.mediaType];
@@ -102,7 +103,6 @@ export const EntryListItem = React.memo(({ entry }: Props) => {
 	const total = entry.source.totalEpisodes;
 	const current = entry.currentEpisode ?? 0;
 	const percent = total ? Math.min(100, (current / total) * 100) : 0;
-	const order = animu?.sections.find((section) => section.entryIds.includes(entry.id))?.entryIds.indexOf(entry.id) ?? -1;
 	const sectionsList = animu?.sections ?? ([] as Section[]);
 
 	return (

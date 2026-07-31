@@ -4,7 +4,7 @@ import { Minus, Plus } from "lucide-react";
 const Wrap = styled.div<{ $transparent?: boolean }>`
 	display: flex;
 	align-items: center;
-	justify-content: center;
+	justify-content: space-between;
 	gap: 4px;
 	border-radius: 6px;
 	padding: 4px 6px;
@@ -34,7 +34,7 @@ const Btn = styled.button`
 `;
 
 const Count = styled.span`
-	font-size: 12px;
+	font-size: 14px;
 	font-weight: 600;
 	color: white;
 	min-width: 40px;
