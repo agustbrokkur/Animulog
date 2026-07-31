@@ -5,8 +5,8 @@ import { Grid2X2, LayoutList, Rows4 } from "lucide-react";
 const Button = styled.button<{ $selected: boolean }>`
 	color: var(--text-dimmer);
 	background: none;
-	width: 30px;
-	height: 30px;
+	width: 38px;
+	height: 38px;
 	cursor: pointer;
 	border: none;
 	transition:
@@ -57,7 +57,7 @@ export const ViewModeButton = ({ currentViewMode, viewMode, onViewModeChange }: 
 
 	return (
 		<Button title={capitalizedTitle} key={viewMode} onClick={() => onViewModeChange(viewMode)} $selected={viewMode === currentViewMode}>
-			<ViewComponent size={14} />
+			<ViewComponent size={16} />
 		</Button>
 	);
 };

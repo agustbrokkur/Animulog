@@ -1,5 +1,46 @@
 import { Link, useParams } from "react-router";
+import styled from "styled-components";
+import { ChevronRight } from "lucide-react";
 import { useAnimu } from "../../../hooks/useAnime";
+
+const Nav = styled.nav`
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	min-width: 0;
+	font-size: 15px;
+`;
+
+const Crumb = styled.span`
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	min-width: 0;
+`;
+
+const CrumbLink = styled(Link)`
+	color: var(--text-dim);
+	text-decoration: none;
+	white-space: nowrap;
+	transition: color 0.1s;
+
+	&:hover {
+		color: var(--text);
+	}
+`;
+
+const CrumbCurrent = styled.span`
+	color: var(--text);
+	font-weight: 600;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+`;
+
+const Separator = styled(ChevronRight)`
+	color: var(--text-dimmer);
+	flex-shrink: 0;
+`;
 
 export const Breadcrumb = () => {
 	const { animeId, sectionId } = useParams();
@@ -19,19 +60,13 @@ export const Breadcrumb = () => {
 	}
 
 	return (
-		<nav className="flex items-center gap-2 text-sm text-gray-400">
+		<Nav>
 			{crumbs.map((crumb, i) => (
-				<span key={crumb.path} className="flex items-center gap-2">
-					{i > 0 && <span>/</span>}
-					{i === crumbs.length - 1 ? (
-						<span className="text-white">{crumb.label}</span>
-					) : (
-						<Link to={crumb.path} className="hover:text-white">
-							{crumb.label}
-						</Link>
-					)}
-				</span>
+				<Crumb key={crumb.path}>
+					{i > 0 && <Separator size={14} />}
+					{i === crumbs.length - 1 ? <CrumbCurrent>{crumb.label}</CrumbCurrent> : <CrumbLink to={crumb.path}>{crumb.label}</CrumbLink>}
+				</Crumb>
 			))}
-		</nav>
+		</Nav>
 	);
 };

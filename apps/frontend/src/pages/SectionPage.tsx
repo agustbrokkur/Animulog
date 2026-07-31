@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import { EntryRenderer, VIEW_MODES, type ViewMode } from "../components/entry/EntryRenderer";
 import { useAnimu } from "../hooks/useAnime";
 import { SquareCheck } from "lucide-react";
+import { GROUP_COLOR_VARS, GROUP_ICONS } from "../types/groupType";
 import { ViewModeSwitcher } from "../components/layout/actions/ViewModeSwitcher";
 import { SearchInput } from "../components/layout/actions/SearchInput";
 import { ToolbarButton } from "../components/layout/actions/ToolbarButton";
@@ -25,18 +26,36 @@ const Wrap = styled.div`
 const Header = styled.div`
 	display: flex;
 	flex-direction: column;
-	justify-content: space-around;
-	align-items: start;
-	min-height: 200px;
-	height: 200px;
-	padding: 20px;
-	margin-bottom: 6px;
+	gap: 18px;
+	padding: 28px 24px 20px;
 	border-bottom: 1px solid var(--border);
-	border-radius: 8px;
 `;
 
-const SectionHeader = styled.div`
-	font-size: 42px;
+const SectionHeader = styled.h1<{ $color: string }>`
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	font-size: 26px;
+	font-weight: 800;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: ${({ $color }) => $color};
+`;
+
+const EntryCount = styled.span`
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 32px;
+	height: 32px;
+	padding: 0 10px;
+	border-radius: 999px;
+	background: var(--bg-4);
+	font-size: 16px;
+	font-weight: 600;
+	letter-spacing: 0;
+	text-transform: none;
+	color: var(--text-dim);
 `;
 
 const SectionBody = styled.div`
@@ -44,6 +63,12 @@ const SectionBody = styled.div`
 	align-items: center;
 	gap: 10px;
 	width: 100%;
+`;
+
+const SectionBodyGroup = styled.div`
+	display: flex;
+	align-items: center;
+	gap: 10px;
 `;
 
 const Container = styled.div<{ $viewMode: ViewMode }>`
@@ -116,30 +141,33 @@ export const SectionView = () => {
 
 	if (!section) return null;
 
+	const GroupIcon = GROUP_ICONS[section.group];
+	const groupColor = GROUP_COLOR_VARS[section.group];
+
 	return (
 		<Wrap>
 			<Header>
-				<SectionHeader>
-					{section.label} ({section.entryIds.length})
+				<SectionHeader $color={groupColor}>
+					<GroupIcon size={24} color={groupColor} />
+					{section.label}
+					<EntryCount>{section.entryIds.length}</EntryCount>
 				</SectionHeader>
 				<SectionBody>
-					<SearchInput value={search} onChange={setSearch} />
-					<FilterMenu entries={entries} filters={filters} onChange={setFilters} />
-					<SortMenu sort={sort} onChange={setSort} />
-					<ToolbarButton icon={SquareCheck} label="Select" />
-					<ViewModeSwitcher viewMode={viewMode} onViewModeChange={setViewMode} />
-					<AddButton />
+					<SectionBodyGroup>
+						<SearchInput value={search} onChange={setSearch} />
+						<FilterMenu entries={entries} filters={filters} onChange={setFilters} />
+						<SortMenu sort={sort} onChange={setSort} />
+					</SectionBodyGroup>
+					<SectionBodyGroup>
+						<ToolbarButton icon={SquareCheck} label="Select" />
+						<ViewModeSwitcher viewMode={viewMode} onViewModeChange={setViewMode} />
+						<AddButton />
+					</SectionBodyGroup>
 				</SectionBody>
 			</Header>
 			<Container $viewMode={viewMode}>
 				{sortedEntries.map((entry) => (
-					<EntryRenderer
-						key={entry.id}
-						entry={entry}
-						viewMode={viewMode}
-						hidden={!visibleEntryIds.has(entry.id)}
-						order={entryOrder.get(entry.id)}
-					/>
+					<EntryRenderer key={entry.id} entry={entry} viewMode={viewMode} hidden={!visibleEntryIds.has(entry.id)} order={entryOrder.get(entry.id)} />
 				))}
 			</Container>
 		</Wrap>
