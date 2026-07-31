@@ -2,7 +2,7 @@ import styled from "styled-components";
 import { useMemo, useState } from "react";
 import { EntryRenderer, VIEW_MODES, type ViewMode } from "../components/entry/EntryRenderer";
 import { useAnimu } from "../hooks/useAnime";
-import { Filter, ArrowUpDown, SquareCheck } from "lucide-react";
+import { SquareCheck } from "lucide-react";
 import { ViewModeSwitcher } from "../components/layout/actions/ViewModeSwitcher";
 import { SearchInput } from "../components/layout/actions/SearchInput";
 import { ToolbarButton } from "../components/layout/actions/ToolbarButton";
@@ -14,6 +14,9 @@ import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import { type EntryFilters, EMPTY_FILTERS } from "../types/filters";
 import { applyEntryFilters } from "../utils/applyEntryFilters";
 import { FilterMenu } from "../components/layout/actions/FilterMenu/FilterMenu";
+import { SortMenu } from "../components/layout/actions/SortMenu/SortMenu";
+import { type EntrySort, DEFAULT_SORT } from "../types/sort";
+import { sortEntries } from "../utils/sortEntries";
 
 const Wrap = styled.div`
 	overflow-y: auto;
@@ -98,6 +101,7 @@ export const SectionView = () => {
 	const [viewMode, setViewMode] = useState<ViewMode>("grid");
 	const [search, setSearch] = useState("");
 	const [filters, setFilters] = useState<EntryFilters>(EMPTY_FILTERS);
+	const [sort, setSort] = useState<EntrySort>(DEFAULT_SORT);
 	const debouncedSearch = useDebouncedValue(search, 200);
 
 	const section = animu?.sections.find((s) => s.id === sectionId);
@@ -105,6 +109,7 @@ export const SectionView = () => {
 		return section?.entryIds.map((id) => animu?.entries.find((e) => e.id === id)).filter((e): e is NonNullable<typeof e> => e != null) ?? [];
 	}, [section, animu]);
 	const searchedEntries = useEntrySearch(entries, debouncedSearch, "quick");
+	const sortedEntries = useMemo(() => sortEntries(searchedEntries, sort), [searchedEntries, sort]);
 	const filteredEntries = useMemo(() => applyEntryFilters(searchedEntries, filters), [searchedEntries, filters]);
 	const visibleEntryIds = useMemo(() => new Set(filteredEntries.map((e) => e.id)), [filteredEntries]);
 
@@ -119,14 +124,14 @@ export const SectionView = () => {
 				<SectionBody>
 					<SearchInput value={search} onChange={setSearch} />
 					<FilterMenu entries={entries} filters={filters} onChange={setFilters} />
-					<ToolbarButton icon={ArrowUpDown} label="Custom order" />
+					<SortMenu sort={sort} onChange={setSort} />
 					<ToolbarButton icon={SquareCheck} label="Select" />
 					<ViewModeSwitcher viewMode={viewMode} onViewModeChange={setViewMode} />
 					<AddButton />
 				</SectionBody>
 			</Header>
 			<Container $viewMode={viewMode}>
-				{searchedEntries.map((entry) => (
+				{sortedEntries.map((entry) => (
 					<EntryRenderer key={entry.id} entry={entry} viewMode={viewMode} hidden={!visibleEntryIds.has(entry.id)} />
 				))}
 			</Container>
