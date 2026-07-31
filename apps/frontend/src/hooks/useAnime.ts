@@ -3,7 +3,7 @@ import { getAnimu } from "../services/animuService";
 
 export const useAnimu = () => {
 	return useQuery({
-		queryKey: ["users"],
+		queryKey: ["animu"],
 		queryFn: getAnimu,
 	});
 };

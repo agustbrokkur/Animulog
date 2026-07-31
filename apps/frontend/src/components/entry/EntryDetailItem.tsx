@@ -11,7 +11,6 @@ import { EntryTitle } from "../layout/entry/EntryTitle";
 import { EntryText } from "../layout/entry/EntryText";
 import { EntryPill } from "../layout/entry/EntryPill";
 import { Actions, Card, Info, Row } from "./EntryDetailItem.styles";
-import { useAnimu } from "../../hooks/useAnime";
 import React from "react";
 
 const STATUS_COLORS: Record<string, [string, string, string]> = {
@@ -21,19 +20,19 @@ const STATUS_COLORS: Record<string, [string, string, string]> = {
 	backlog: ["#fbbf24", "rgba(120,53,15,0.4)", "#92400e"],
 };
 
+const noop = () => {};
+
 interface EntryDetailItemProps {
 	entry: Entry;
 	order?: number;
+	sections: Section[];
 }
 
-export const EntryDetailItem = React.memo(({ entry, order }: EntryDetailItemProps) => {
-	const { data: animu } = useAnimu();
-
+export const EntryDetailItem = React.memo(({ entry, order, sections }: EntryDetailItemProps) => {
 	const Icon = MEDIA_ICONS[entry.mediaType];
 	const coverUrl = entry.coverUrl ?? entry.source.coverUrl ?? undefined;
 	const status = entry.droppedAt ? "dropped" : entry.finishedAt ? "finished" : entry.startedAt ? "watching" : "backlog";
 	const [statusColor, statusBg, statusBorder] = STATUS_COLORS[status];
-	const sectionsList = animu?.sections ?? ([] as Section[]);
 
 	return (
 		<Card>
@@ -83,8 +82,8 @@ export const EntryDetailItem = React.memo(({ entry, order }: EntryDetailItemProp
 				{entry.note && <EntryText $italic>{entry.note}</EntryText>}
 
 				<Actions>
-					<EpisodeStepper current={entry.currentEpisode ?? 0} total={entry.source.totalEpisodes ?? undefined} onChange={() => {}} />
-					<MoveMenu sections={sectionsList} onMove={() => {}} />
+					<EpisodeStepper current={entry.currentEpisode ?? 0} total={entry.source.totalEpisodes ?? undefined} onChange={noop} />
+					<MoveMenu sections={sections} onMove={noop} />
 					<OpenButton to={`/anime/${entry.id}`} />
 				</Actions>
 			</Info>

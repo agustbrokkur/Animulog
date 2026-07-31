@@ -6,6 +6,8 @@ import { EpisodeStepper } from "../layout/entry/EpisodeStepper";
 import { OpenButton } from "../layout/entry/OpenButton";
 import React from "react";
 
+const noop = () => {};
+
 const Wrap = styled.div`
 	display: flex;
 	flex-direction: column;
@@ -139,7 +141,7 @@ export const EntryGridItem = React.memo(({ entry }: Props) => {
 				)}
 
 				<HoverScrim>
-					<EpisodeStepper current={entry.currentEpisode ?? 0} total={total ?? undefined} onChange={() => {}} transparent />
+					<EpisodeStepper current={entry.currentEpisode ?? 0} total={total ?? undefined} onChange={noop} transparent />
 					<OpenButton to={`/anime/${entry.id}`} transparent />
 				</HoverScrim>
 			</Card>

@@ -8,9 +8,10 @@ import { EntryTitle } from "../layout/entry/EntryTitle";
 import { EpisodeStepper } from "../layout/entry/EpisodeStepper";
 import { MoveMenu } from "../layout/entry/MoveMenu";
 import { OpenButton } from "../layout/entry/OpenButton";
-import { useAnimu } from "../../hooks/useAnime";
 import { EntryCoverCompact } from "../layout/entry/EntryCoverCompact";
 import React from "react";
+
+const noop = () => {};
 
 // EntryListItem.tsx
 const Row = styled.div`
@@ -62,11 +63,11 @@ const Track = styled.div`
 	overflow: hidden;
 `;
 
-const Fill = styled.div<{ $percent: number }>`
+const Fill = styled.div`
 	height: 100%;
 	border-radius: 999px;
 	background: var(--color-group-watching);
-	width: ${({ $percent }) => $percent}%;
+	width: var(--percent, 0%);
 `;
 
 const ProgressLabel = styled.span`
@@ -93,17 +94,15 @@ const Actions = styled.div`
 interface Props {
 	entry: Entry;
 	order?: number;
+	sections: Section[];
 }
 
-export const EntryListItem = React.memo(({ entry, order }: Props) => {
-	const { data: animu } = useAnimu();
-
+export const EntryListItem = React.memo(({ entry, order, sections }: Props) => {
 	const Icon = MEDIA_ICONS[entry.mediaType];
 	const coverUrl = entry.coverUrl ?? entry.source.coverUrl ?? undefined;
 	const total = entry.source.totalEpisodes;
 	const current = entry.currentEpisode ?? 0;
 	const percent = total ? Math.min(100, (current / total) * 100) : 0;
-	const sectionsList = animu?.sections ?? ([] as Section[]);
 
 	return (
 		<Row>
@@ -131,7 +130,7 @@ export const EntryListItem = React.memo(({ entry, order }: Props) => {
 				{total != null && (
 					<Progress>
 						<Track>
-							<Fill $percent={percent} />
+							<Fill style={{ "--percent": `${percent}%` } as React.CSSProperties} />
 						</Track>
 						<ProgressLabel>
 							{current} / {total}
@@ -141,8 +140,8 @@ export const EntryListItem = React.memo(({ entry, order }: Props) => {
 			</Info>
 
 			<Actions>
-				<EpisodeStepper current={current} total={total ?? undefined} onChange={() => {}} />
-				<MoveMenu sections={sectionsList} onMove={() => {}} />
+				<EpisodeStepper current={current} total={total ?? undefined} onChange={noop} />
+				<MoveMenu sections={sections} onMove={noop} />
 				<OpenButton to={`/anime/${entry.id}`} />
 			</Actions>
 		</Row>

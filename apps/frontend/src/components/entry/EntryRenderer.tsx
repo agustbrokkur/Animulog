@@ -1,5 +1,6 @@
-import styled from "styled-components";
+import React from "react";
 import type { Entry } from "../../types/entry";
+import type { Section } from "../../types/section";
 import { EntryDetailItem } from "./EntryDetailItem";
 import { EntryListItem } from "./EntryListItem";
 import { EntryGridItem } from "./EntryGridItem";
@@ -7,32 +8,30 @@ import { EntryGridItem } from "./EntryGridItem";
 export type ViewMode = "detail" | "list" | "grid";
 export const VIEW_MODES: ViewMode[] = ["detail", "list", "grid"];
 
-// display:contents keeps a slot invisible to layout when shown, so both hiding
-// an entry and switching view mode are pure CSS toggles instead of an
-// unmount/remount of the card — all three variants stay mounted at once.
-const ViewSlot = styled.div<{ $show: boolean }>`
-	display: ${({ $show }) => ($show ? "contents" : "none")};
-`;
-
 interface EntryRendererProps {
 	entry: Entry;
 	viewMode: ViewMode;
-	hidden?: boolean;
 	order?: number;
+	sections: Section[];
 }
 
-export const EntryRenderer = ({ entry, viewMode, hidden = false, order }: EntryRendererProps) => {
-	return (
-		<>
-			<ViewSlot $show={!hidden && viewMode === "detail"}>
-				<EntryDetailItem entry={entry} order={order} />
-			</ViewSlot>
-			<ViewSlot $show={!hidden && viewMode === "list"}>
-				<EntryListItem entry={entry} order={order} />
-			</ViewSlot>
-			<ViewSlot $show={!hidden && viewMode === "grid"}>
-				<EntryGridItem entry={entry} />
-			</ViewSlot>
-		</>
-	);
-};
+/**
+ * Renders exactly one variant. The previous version mounted all three and hid
+ * two with `display: none`, which tripled the DOM and made every style recalc
+ * and layout pass three times more expensive than it needed to be.
+ *
+ * Switching view mode now unmounts and remounts, but that happens on an
+ * explicit user click a few times a session — not on every filter keystroke.
+ */
+export const EntryRenderer = React.memo(({ entry, viewMode, order, sections }: EntryRendererProps) => {
+	switch (viewMode) {
+		case "detail":
+			return <EntryDetailItem entry={entry} order={order} sections={sections} />;
+		case "list":
+			return <EntryListItem entry={entry} order={order} sections={sections} />;
+		case "grid":
+			return <EntryGridItem entry={entry} />;
+	}
+});
+
+EntryRenderer.displayName = "EntryRenderer";

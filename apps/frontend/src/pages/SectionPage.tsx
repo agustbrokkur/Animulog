@@ -1,5 +1,5 @@
 import styled from "styled-components";
-import { useMemo, useState } from "react";
+import { useDeferredValue, useMemo, useState } from "react";
 import { EntryRenderer, VIEW_MODES, type ViewMode } from "../components/entry/EntryRenderer";
 import { useAnimu } from "../hooks/useAnime";
 import { SquareCheck } from "lucide-react";
@@ -71,6 +71,11 @@ const SectionBodyGroup = styled.div`
 	gap: 10px;
 `;
 
+/**
+ * `content-visibility: auto` lets the browser skip layout/paint for offscreen
+ * children. `contain-intrinsic-size` gives it a placeholder height so the
+ * scrollbar stays stable. This is cheap virtualization without a dependency.
+ */
 const Container = styled.div<{ $viewMode: ViewMode }>`
 	display: ${({ $viewMode }) => ($viewMode === "grid" ? "grid" : "flex")};
 	${({ $viewMode }) =>
@@ -84,6 +89,32 @@ const Container = styled.div<{ $viewMode: ViewMode }>`
         gap: ${$viewMode === "list" ? "6px" : "10px"};
       `}
 	padding: 16px 24px 24px;
+
+	> * {
+		content-visibility: auto;
+		contain-intrinsic-size: auto ${({ $viewMode }) => ($viewMode === "list" ? "144px" : "320px")};
+	}
+`;
+
+const EmptyState = styled.div`
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 10px;
+	padding: 80px 24px;
+	color: var(--text-dimmer);
+	text-align: center;
+`;
+
+const EmptyTitle = styled.span`
+	font-size: 15px;
+	font-weight: 600;
+	color: var(--text-dim);
+`;
+
+const EmptyHint = styled.span`
+	font-size: 13px;
 `;
 
 export const testEntry: Entry = {
@@ -124,20 +155,27 @@ export const SectionView = () => {
 	const { sectionId } = useParams();
 	const { data: animu } = useAnimu();
 	const [viewMode, setViewMode] = useState<ViewMode>("grid");
+	const deferredViewMode = useDeferredValue(viewMode);
 	const [search, setSearch] = useState("");
 	const [filters, setFilters] = useState<EntryFilters>(EMPTY_FILTERS);
 	const [sort, setSort] = useState<EntrySort>(DEFAULT_SORT);
 	const debouncedSearch = useDebouncedValue(search, 200);
 
 	const section = animu?.sections.find((s) => s.id === sectionId);
+	const sections = useMemo(() => animu?.sections ?? [], [animu]);
 	const entries = useMemo(() => {
 		return section?.entryIds.map((id) => animu?.entries.find((e) => e.id === id)).filter((e): e is NonNullable<typeof e> => e != null) ?? [];
 	}, [section, animu]);
-	const searchedEntries = useEntrySearch(entries, debouncedSearch, "quick");
-	const sortedEntries = useMemo(() => sortEntries(searchedEntries, sort), [searchedEntries, sort]);
-	const filteredEntries = useMemo(() => applyEntryFilters(searchedEntries, filters), [searchedEntries, filters]);
-	const visibleEntryIds = useMemo(() => new Set(filteredEntries.map((e) => e.id)), [filteredEntries]);
 	const entryOrder = useMemo(() => new Map(section?.entryIds.map((id, index) => [id, index])), [section]);
+
+	const searchedEntries = useEntrySearch(entries, debouncedSearch, "quick");
+
+	const deferredFilters = useDeferredValue(filters);
+	const deferredSort = useDeferredValue(sort);
+
+	const visibleEntries = useMemo(() => sortEntries(applyEntryFilters(searchedEntries, deferredFilters), deferredSort), [searchedEntries, deferredFilters, deferredSort]);
+
+	const isStale = filters !== deferredFilters || sort !== deferredSort || viewMode !== deferredViewMode;
 
 	if (!section) return null;
 
@@ -165,11 +203,19 @@ export const SectionView = () => {
 					</SectionBodyGroup>
 				</SectionBody>
 			</Header>
-			<Container $viewMode={viewMode}>
-				{sortedEntries.map((entry) => (
-					<EntryRenderer key={entry.id} entry={entry} viewMode={viewMode} hidden={!visibleEntryIds.has(entry.id)} order={entryOrder.get(entry.id)} />
-				))}
-			</Container>
+
+			{visibleEntries.length === 0 ? (
+				<EmptyState>
+					<EmptyTitle>No entries found</EmptyTitle>
+					<EmptyHint>Try a different search term or adjust your filters.</EmptyHint>
+				</EmptyState>
+			) : (
+				<Container $viewMode={deferredViewMode} style={{ opacity: isStale ? 0.6 : 1 }}>
+					{visibleEntries.map((entry) => (
+						<EntryRenderer key={entry.id} entry={entry} viewMode={deferredViewMode} order={entryOrder.get(entry.id)} sections={sections} />
+					))}
+				</Container>
+			)}
 		</Wrap>
 	);
 };
