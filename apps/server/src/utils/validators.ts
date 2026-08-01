@@ -110,11 +110,14 @@ export function validateCreateEntry(entry: CreateEntry): string | null {
     if (!isValidOptionalNumber(entry.progress)) {
         return "Invalid progress";
     }
-    if (entry.titleOverride !== null && !isValidString(entry.titleOverride)) {
-        return "Invalid titleOverride";
+    if (!isValidString(entry.title)) {
+        return "Invalid title";
     }
     if (entry.coverOverride !== null && !isValidUrl(entry.coverOverride)) {
         return "Invalid coverOverride";
+    }
+    if (!isValidStringArray(entry.tags)) {
+        return "Invalid tags";
     }
     return null;
 }

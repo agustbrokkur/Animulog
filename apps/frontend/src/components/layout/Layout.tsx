@@ -2,6 +2,8 @@ import styled from "styled-components";
 import { Outlet } from "react-router";
 import { Sidebar } from "./sidebar/Sidebar";
 import { Toolbar } from "./toolbar/Toolbar";
+import { EntryPanelProvider } from "../../context/EntryPanelContext";
+import { EntryDetailPanel } from "../entry/EntryDetailPanel";
 
 const Container = styled.div`
 	display: flex;
@@ -24,14 +26,17 @@ const Main = styled.main`
 
 export const Layout = () => {
 	return (
-		<Container>
-			<Sidebar />
-			<Content>
-				<Toolbar />
-				<Main>
-					<Outlet />
-				</Main>
-			</Content>
-		</Container>
+		<EntryPanelProvider>
+			<Container>
+				<Sidebar />
+				<Content>
+					<Toolbar />
+					<Main>
+						<Outlet />
+					</Main>
+				</Content>
+			</Container>
+			<EntryDetailPanel />
+		</EntryPanelProvider>
 	);
 };

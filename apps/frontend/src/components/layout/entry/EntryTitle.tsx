@@ -1,7 +1,13 @@
 import styled from "styled-components";
-import { Link } from "react-router";
 
-const Main = styled(Link)`
+const Main = styled.button`
+	display: block;
+	background: none;
+	border: none;
+	padding: 0;
+	font: inherit;
+	text-align: left;
+	cursor: pointer;
 	font-size: 18px;
 	font-weight: 600;
 	color: white;
@@ -16,9 +22,9 @@ const Sub = styled.p`
 	margin-top: 2px;
 `;
 
-export const EntryTitle = ({ to, title, subtitle, englishSubtitle }: { to: string; title: string; subtitle?: string; englishSubtitle?: string }) => (
+export const EntryTitle = ({ onClick, title, subtitle, englishSubtitle }: { onClick: () => void; title: string; subtitle?: string; englishSubtitle?: string }) => (
 	<div>
-		<Main to={to}>{title}</Main>
+		<Main onClick={onClick}>{title}</Main>
 		{subtitle && (
 			<Sub>
 				{subtitle} ({englishSubtitle})

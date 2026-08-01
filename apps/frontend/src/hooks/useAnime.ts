@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { getAnimu, updateEntry, updateSectionEntries } from "../services/animuService";
+import { deleteEntry, getAnimu, updateEntry, updateEntryFranchise, updateSectionEntries } from "../services/animuService";
 import type { Animu } from "../types/animu";
-import type { Entry } from "../types/entry";
+import type { Entry, UpdateEntry } from "../types/entry";
 import type { MediaType } from "../types/mediaType";
 import type { Status } from "../types/status";
 import { isManualSection, type Section } from "../types/section";
@@ -100,6 +100,55 @@ export const useUpdateEntryMediaType = () => {
 			if (context?.previous) queryClient.setQueryData(["animu"], context.previous);
 		},
 		onSettled: () => queryClient.invalidateQueries({ queryKey: ["animu"] }),
+	});
+};
+
+/** Generic field patch — merges `patch` onto `entry` and sends the whole entry back (the API is a full replace, not a partial patch). Bumps `timestamps.updated` unless the caller already set it. */
+export const useUpdateEntry = () => {
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: ({ entry, patch }: { entry: Entry; patch: Partial<UpdateEntry> }) => {
+			const { id, source, ...rest } = entry;
+			return updateEntry(id, { ...rest, ...patch, timestamps: patch.timestamps ?? { ...entry.timestamps, updated: Date.now() } });
+		},
+		onMutate: async ({ entry, patch }) => {
+			await queryClient.cancelQueries({ queryKey: ["animu"] });
+			const previous = queryClient.getQueryData<Animu>(["animu"]);
+
+			if (previous?.entries[entry.id]) {
+				queryClient.setQueryData<Animu>(["animu"], {
+					...previous,
+					entries: { ...previous.entries, [entry.id]: { ...previous.entries[entry.id], ...patch } },
+				});
+			}
+
+			return { previous };
+		},
+		onError: (_error, _vars, context) => {
+			if (context?.previous) queryClient.setQueryData(["animu"], context.previous);
+		},
+		onSettled: () => queryClient.invalidateQueries({ queryKey: ["animu"] }),
+	});
+};
+
+/** Permanently deletes an entry. Does not clean up references in sections/franchises client-side — the server invalidation refetch reflects whatever the backend leaves behind. */
+export const useDeleteEntry = () => {
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: (entryId: string) => deleteEntry(entryId),
+		onSuccess: () => queryClient.invalidateQueries({ queryKey: ["animu"] }),
+	});
+};
+
+/** Assigns an entry to the franchise matching `title` (case-insensitive), creating one if needed; pass `null` to clear membership. Franchise membership lives outside `entries`, so this always refetches rather than patching optimistically. */
+export const useUpdateEntryFranchise = () => {
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: ({ entryId, title }: { entryId: string; title: string | null }) => updateEntryFranchise(entryId, title),
+		onSuccess: () => queryClient.invalidateQueries({ queryKey: ["animu"] }),
 	});
 };
 

@@ -31,6 +31,7 @@ export const GlobalStyle = createGlobalStyle`
 
     /* brand + domain colors */
     --color-brand: #E8473F;
+    --color-brand-dim: rgba(232, 71, 63, 0.15);
 
     --color-group-watching: #378ADD;
     --color-group-backlog: #EF9F27;

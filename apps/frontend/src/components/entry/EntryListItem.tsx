@@ -11,10 +11,10 @@ import { MediaTypeMenu } from "../layout/entry/MediaTypeMenu";
 import { StatusMenu } from "../layout/entry/StatusMenu";
 import { OpenButton } from "../layout/entry/OpenButton";
 import { EntryCoverCompact } from "../layout/entry/EntryCoverCompact";
-import { Link } from "react-router";
 import React, { useEffect, useState } from "react";
 import { useAdjustEntryProgress, useMoveEntryToSection, useUpdateEntryMediaType, useUpdateEntryStatus } from "../../hooks/useAnime";
 import { useOpenMenuTracker } from "../../hooks/useOpenMenuTracker";
+import { useEntryPanel } from "../../context/EntryPanelContext";
 
 /** Baseline compact card height (a minimum, not a cap — long titles grow it) — used by grids that estimate row heights, e.g. the Overview page's 2-row clip. */
 export const COMPACT_ENTRY_HEIGHT = 104;
@@ -38,11 +38,15 @@ const Card = styled.div<{ $color: string; $compact: boolean }>`
 	}
 `;
 
-/** Full-bleed invisible link behind the content — only used in compact mode, where there are no other interactive children to conflict with. */
-const CardLink = styled(Link)`
+/** Full-bleed invisible button behind the content — only used in compact mode, where there are no other interactive children to conflict with. */
+const CardButton = styled.button`
 	position: absolute;
 	inset: 0;
 	z-index: 0;
+	background: none;
+	border: none;
+	padding: 0;
+	cursor: pointer;
 `;
 
 const OrderColumn = styled.div<{ $color: string }>`
@@ -116,11 +120,16 @@ const Info = styled.div`
 	text-align: left;
 `;
 
-const Title = styled(Link)<{ $compact: boolean }>`
+const Title = styled.button<{ $compact: boolean }>`
 	font-weight: 600;
 	color: var(--text);
 	text-align: left;
 	text-decoration: none;
+	background: none;
+	border: none;
+	padding: 0;
+	font-family: inherit;
+	cursor: pointer;
 	font-size: ${({ $compact }) => ($compact ? "13px" : "17px")};
 
 	&:hover {
@@ -214,6 +223,7 @@ export const EntryListItem = React.memo(({ entry, order, sections, compact = fal
 	const { mutate: updateMediaType } = useUpdateEntryMediaType();
 	const { mutate: updateStatus } = useUpdateEntryStatus();
 	const { anyOpen: menuOpen, setMenuOpen } = useOpenMenuTracker();
+	const { openPanel } = useEntryPanel();
 
 	const [orderValue, setOrderValue] = useState(order != null ? String(order) : "");
 	useEffect(() => {
@@ -232,7 +242,7 @@ export const EntryListItem = React.memo(({ entry, order, sections, compact = fal
 
 	return (
 		<Card $color={color} $compact={compact}>
-			{compact && <CardLink to={`/anime/${entry.id}`} />}
+			{compact && <CardButton onClick={() => openPanel(entry.id)} />}
 
 			{!compact && order != null && (
 				<OrderColumn $color={color}>
@@ -253,11 +263,11 @@ export const EntryListItem = React.memo(({ entry, order, sections, compact = fal
 
 			<Content $compact={compact}>
 				<CoverWrap $compact={compact}>
-					<EntryCoverCompact src={displayCover ?? undefined} to={`/anime/${entry.id}`} favorite={entry.favorite} />
+					<EntryCoverCompact src={displayCover ?? undefined} onClick={() => openPanel(entry.id)} favorite={entry.favorite} />
 				</CoverWrap>
 
 				<Info>
-					<Title to={`/anime/${entry.id}`} $compact={compact}>
+					<Title onClick={() => openPanel(entry.id)} $compact={compact}>
 						{displayTitle}
 					</Title>
 

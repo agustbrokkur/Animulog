@@ -13,6 +13,7 @@ import { OpenButton } from "../layout/entry/OpenButton";
 import React from "react";
 import { useAdjustEntryProgress, useMoveEntryToSection, useUpdateEntryMediaType, useUpdateEntryStatus } from "../../hooks/useAnime";
 import { useOpenMenuTracker } from "../../hooks/useOpenMenuTracker";
+import { useEntryPanel } from "../../context/EntryPanelContext";
 
 const Wrap = styled.div`
 	display: flex;
@@ -27,6 +28,7 @@ const Card = styled.div`
 	overflow: hidden;
 	background: var(--bg-3);
 	border: 2px solid transparent;
+	cursor: pointer;
 	transition: border-color 150ms;
 
 	&:hover {
@@ -103,8 +105,14 @@ const ScrimRow = styled.div`
 	align-items: center;
 	gap: 6px;
 
-	> a {
+	> * {
 		flex: 1;
+		min-width: 0;
+	}
+
+	> * button {
+		width: 100%;
+		justify-content: center;
 	}
 `;
 
@@ -113,9 +121,14 @@ const Footer = styled.div`
 	alignitems: flex-start;
 `;
 
-const Title = styled.a`
+const Title = styled.button`
 	display: -webkit-box;
 	flex: 1;
+	background: none;
+	border: none;
+	padding: 0;
+	font: inherit;
+	cursor: pointer;
 	font-size: 16px;
 	color: #d1d5db;
 	white-space: initial;
@@ -146,10 +159,11 @@ export const EntryGridItem = React.memo(({ entry, sections }: Props) => {
 	const { mutate: updateMediaType } = useUpdateEntryMediaType();
 	const { mutate: updateStatus } = useUpdateEntryStatus();
 	const { anyOpen: menuOpen, setMenuOpen } = useOpenMenuTracker();
+	const { openPanel } = useEntryPanel();
 
 	return (
 		<Wrap>
-			<Card>
+			<Card onClick={() => openPanel(entry.id)}>
 				<Img src={displayCover ?? undefined} loading="lazy" decoding="async" />
 
 				<ProgressBadge $color={color}>
@@ -164,8 +178,10 @@ export const EntryGridItem = React.memo(({ entry, sections }: Props) => {
 				)}
 
 				<HoverScrim $forceOpen={menuOpen}>
-					<EpisodeStepper current={entry.progress ?? 0} total={total ?? undefined} onChange={(delta) => adjustProgress({ entry, delta })} transparent />
-					<ScrimRow>
+					<div onClick={(e) => e.stopPropagation()}>
+						<EpisodeStepper current={entry.progress ?? 0} total={total ?? undefined} onChange={(delta) => adjustProgress({ entry, delta })} transparent />
+					</div>
+					<ScrimRow onClick={(e) => e.stopPropagation()}>
 						<MediaTypeMenu
 							mediaType={entry.mediaType}
 							onChange={(mediaType) => updateMediaType({ entry, mediaType })}
@@ -174,7 +190,7 @@ export const EntryGridItem = React.memo(({ entry, sections }: Props) => {
 						/>
 						<StatusMenu status={entry.status} onChange={(status) => updateStatus({ entry, status })} onOpenChange={(open) => setMenuOpen("status", open)} transparent />
 					</ScrimRow>
-					<ScrimRow>
+					<ScrimRow onClick={(e) => e.stopPropagation()}>
 						<MoveMenu
 							sections={sections}
 							entryId={entry.id}
@@ -188,7 +204,7 @@ export const EntryGridItem = React.memo(({ entry, sections }: Props) => {
 			</Card>
 
 			<Footer>
-				<Title href={`/anime/${entry.id}`}>{displayTitle}</Title>
+				<Title onClick={() => openPanel(entry.id)}>{displayTitle}</Title>
 			</Footer>
 		</Wrap>
 	);

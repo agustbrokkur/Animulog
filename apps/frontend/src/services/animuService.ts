@@ -21,6 +21,24 @@ export const updateEntry = async (id: string, entry: UpdateEntry): Promise<void>
 	if (!res.ok) throw new Error("Failed to update entry");
 };
 
+export const deleteEntry = async (id: string): Promise<void> => {
+	const res = await fetch(`${BASE_API_URL}/animu/entries/${id}`, {
+		method: "DELETE",
+	});
+
+	if (!res.ok) throw new Error("Failed to delete entry");
+};
+
+export const updateEntryFranchise = async (id: string, title: string | null): Promise<void> => {
+	const res = await fetch(`${BASE_API_URL}/animu/entries/${id}/franchise`, {
+		method: "PUT",
+		headers: { "Content-Type": "application/json" },
+		body: JSON.stringify({ title }),
+	});
+
+	if (!res.ok) throw new Error("Failed to update entry franchise");
+};
+
 export const updateSectionEntries = async (sectionId: string, entryIds: string[]): Promise<string[]> => {
 	const res = await fetch(`${BASE_API_URL}/animu/sections/${sectionId}/entries`, {
 		method: "PUT",

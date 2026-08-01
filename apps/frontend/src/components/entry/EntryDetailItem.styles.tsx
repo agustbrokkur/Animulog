@@ -32,6 +32,20 @@ export const Row = styled.div`
 	gap: 6px;
 `;
 
+export const Field = styled.div`
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+`;
+
+export const FieldLabel = styled.span`
+	font-size: 11px;
+	font-weight: 700;
+	letter-spacing: 0.5px;
+	text-transform: uppercase;
+	color: var(--text-dimmer);
+`;
+
 export const Actions = styled.div<{ $forceOpen?: boolean }>`
 	display: flex;
 	align-items: center;

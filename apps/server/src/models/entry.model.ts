@@ -38,14 +38,16 @@ export type EntryTimestamps = {
 export type Entry = {
     id: EntryId;
     mediaType: MediaType;
+    /** The title the user chose for this entry — used to search/match providers, not a fallback over `source`. Always set, even for custom entries with no `source` yet. */
+    title: string;
     status: Status;
     favorite: boolean;
     note: string | null;
     score: number | null; // personal rating
     progress: number | null;
 
-    titleOverride: string | null; // null = defer to source
     coverOverride: string | null;
+    tags: string[];
 
     source: EntrySource | null; // null for custom entries (VNs, western, unmatched)
 
@@ -57,7 +59,8 @@ export type ResolvedEntry = Entry & { displayTitle: string; displayCover: string
 export function resolve(entry: Entry): ResolvedEntry {
     return {
         ...entry,
-        displayTitle: entry.titleOverride ?? entry.source?.englishTitle ?? "Untitled",
+        // `title` is always meant to be set — the fallback chain only protects entries written before this field existed.
+        displayTitle: entry.title || entry.source?.englishTitle || entry.source?.japaneseTitle || "Untitled",
         displayCover: entry.coverOverride ?? entry.source?.coverUrl ?? null,
     };
 }

@@ -15,10 +15,11 @@ import { OpenButton } from "../layout/entry/OpenButton";
 import { EntryTitle } from "../layout/entry/EntryTitle";
 import { EntryText } from "../layout/entry/EntryText";
 import { EntryPill } from "../layout/entry/EntryPill";
-import { Actions, Card, Info, Row } from "./EntryDetailItem.styles";
+import { Actions, Card, Field, FieldLabel, Info, Row } from "./EntryDetailItem.styles";
 import React from "react";
 import { useAdjustEntryProgress, useMoveEntryToSection, useUpdateEntryMediaType, useUpdateEntryStatus } from "../../hooks/useAnime";
 import { useOpenMenuTracker } from "../../hooks/useOpenMenuTracker";
+import { useEntryPanel } from "../../context/EntryPanelContext";
 
 const STATUS_COLORS: Record<Status, [string, string, string]> = {
 	unsorted: ["#9ca3af", "rgba(55,65,81,0.4)", "#374151"],
@@ -44,10 +45,11 @@ export const EntryDetailItem = React.memo(({ entry, order, sections }: EntryDeta
 	const { mutate: updateMediaType } = useUpdateEntryMediaType();
 	const { mutate: updateStatus } = useUpdateEntryStatus();
 	const { anyOpen: menuOpen, setMenuOpen } = useOpenMenuTracker();
+	const { openPanel } = useEntryPanel();
 
 	return (
 		<Card>
-			<EntryCover src={displayCover ?? undefined} title={displayTitle} to={`/anime/${entry.id}`} favorite={entry.favorite} />
+			<EntryCover src={displayCover ?? undefined} title={displayTitle} onClick={() => openPanel(entry.id)} favorite={entry.favorite} />
 
 			<Info>
 				<div>
@@ -57,7 +59,7 @@ export const EntryDetailItem = React.memo(({ entry, order, sections }: EntryDeta
 				</div>
 
 				<EntryTitle
-					to={`/anime/${entry.id}`}
+					onClick={() => openPanel(entry.id)}
 					title={`${displayTitle} (${entry.mediaType.toUpperCase()})`}
 					subtitle={entry.source?.japaneseTitle}
 					englishSubtitle={entry.source?.englishTitle}
@@ -89,8 +91,18 @@ export const EntryDetailItem = React.memo(({ entry, order, sections }: EntryDeta
 					))}
 				</Row>
 
-				{entry.source?.synopsis && <EntryText $clamp={2}>{entry.source.synopsis}</EntryText>}
-				{entry.note && <EntryText $italic>{entry.note}</EntryText>}
+				{entry.source?.synopsis && (
+					<Field>
+						<FieldLabel>Synopsis</FieldLabel>
+						<EntryText $clamp={2}>{entry.source.synopsis}</EntryText>
+					</Field>
+				)}
+				{entry.note && (
+					<Field>
+						<FieldLabel>Your Note</FieldLabel>
+						<EntryText $italic>{entry.note}</EntryText>
+					</Field>
+				)}
 
 				<Actions $forceOpen={menuOpen}>
 					<EpisodeStepper current={entry.progress ?? 0} total={entry.source?.totalEpisodes ?? undefined} onChange={(delta) => adjustProgress({ entry, delta })} />

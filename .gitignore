@@ -17,6 +17,9 @@ dist
 dist-ssr
 *.local
 
+# Reference-only project, not part of this repo
+for_reference
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

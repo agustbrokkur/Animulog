@@ -1,7 +1,7 @@
 import { type Request, type Response, Router } from "express";
 import type { CreateEntry, Entry, UpdateEntry } from "../models/entry.model.ts";
-import { isValidId, validateCreateEntry, validateUpdateEntry } from "../utils/validators.ts";
-import { asEntryId, newEntryId } from "../models/ids.ts";
+import { isValidId, isValidString, validateCreateEntry, validateUpdateEntry } from "../utils/validators.ts";
+import { asEntryId, franchiseIdFor, newEntryId } from "../models/ids.ts";
 import { handleError } from "../utils/errorUtils.ts";
 import { readAnimuData, writeAnimuData } from "../utils/fileUtils.ts";
 
@@ -38,13 +38,14 @@ entryRouter.post("/", (req: Request<any, any, CreateEntry>, res: Response) => {
         const newEntry: Entry = {
             id: newId,
             mediaType: createdEntry.mediaType,
+            title: createdEntry.title,
             status: createdEntry.status ?? "unsorted",
             favorite: createdEntry.favorite,
             note: createdEntry.note,
             score: createdEntry.score,
             progress: createdEntry.progress,
-            titleOverride: createdEntry.titleOverride,
             coverOverride: createdEntry.coverOverride,
+            tags: createdEntry.tags,
             source: null,
             timestamps: {
                 added: now,
@@ -159,6 +160,60 @@ entryRouter.delete("/:id", (req: Request<{ id: string }>, res: Response) => {
         res.status(201).json({ ok: true });
     } catch (error: unknown) {
         handleError(res, error, "Error deleting entry");
+    }
+});
+
+// PUT /api/animu/entries/:id/franchise
+// Assigns the entry to the franchise matching `title` (case-insensitive), creating one if none matches.
+// Passing title: null clears the entry's franchise membership. The entry is always removed from
+// whatever franchise it previously belonged to first; a franchise left with no entries is deleted.
+entryRouter.put("/:id/franchise", (req: Request<{ id: string }, any, { title: string | null }>, res: Response) => {
+    try {
+        const { id } = req.params;
+        if (!isValidId(id)) {
+            return res.status(400).json({
+                message: "Invalid entry id"
+            });
+        }
+
+        const { title } = req.body;
+        if (title !== null && !isValidString(title)) {
+            return res.status(400).json({
+                message: "Invalid franchise title"
+            });
+        }
+
+        const data = readAnimuData();
+        const entryId = asEntryId(id);
+        const existingEntry = data.entries[entryId];
+
+        if (!existingEntry) {
+            return res.status(404).json({
+                message: `Entry id "${id}" not found`
+            });
+        }
+
+        for (const franchise of Object.values(data.franchises)) {
+            if (!franchise.entryIds.includes(entryId)) continue;
+            franchise.entryIds = franchise.entryIds.filter((existingId) => existingId !== entryId);
+            if (franchise.entryIds.length === 0) delete data.franchises[franchise.id];
+        }
+
+        if (title !== null) {
+            const trimmed = title.trim();
+            let target = Object.values(data.franchises).find((f) => f.title.toLowerCase() === trimmed.toLowerCase());
+            if (!target) {
+                const newId = franchiseIdFor(entryId);
+                target = { id: newId, title: trimmed, coverUrl: existingEntry.coverOverride ?? existingEntry.source?.coverUrl ?? null, entryIds: [] };
+                data.franchises[newId] = target;
+            }
+            if (!target.entryIds.includes(entryId)) target.entryIds.push(entryId);
+        }
+
+        writeAnimuData(data);
+        res.status(200).json({ ok: true });
+    } catch (error: unknown) {
+        handleError(res, error, "Error updating entry franchise");
     }
 });
 

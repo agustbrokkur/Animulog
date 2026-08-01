@@ -1,9 +1,8 @@
 // EntryCoverCompact.tsx
 import styled from "styled-components";
-import { Link } from "react-router";
 import { Star } from "lucide-react";
 
-const Wrap = styled(Link)`
+const Wrap = styled.div`
 	display: block;
 	height: 100%;
 	aspect-ratio: 2 / 3;
@@ -12,6 +11,7 @@ const Wrap = styled(Link)`
 	background: var(--bg-3);
 	position: relative;
 	flex-shrink: 0;
+	cursor: pointer;
 `;
 
 const Img = styled.img`
@@ -24,12 +24,12 @@ const Img = styled.img`
 
 interface EntryCoverCompactProps {
 	src?: string;
-	to: string;
+	onClick: () => void;
 	favorite?: boolean;
 }
 
-export const EntryCoverCompact = ({ src, to, favorite }: EntryCoverCompactProps) => (
-	<Wrap to={to} className="cover">
+export const EntryCoverCompact = ({ src, onClick, favorite }: EntryCoverCompactProps) => (
+	<Wrap onClick={onClick} className="cover">
 		<Img src={src} loading="lazy" decoding="async" />
 		{favorite && <Star size={11} fill="#fbbf24" color="#fbbf24" style={{ position: "absolute", top: 2, right: 2 }} />}
 	</Wrap>
