@@ -1,10 +1,24 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { deleteEntry, getAnimu, updateEntry, updateEntryFranchise, updateSectionEntries } from "../services/animuService";
+import {
+	createSection,
+	deleteEntry,
+	deleteFranchise,
+	deleteSection,
+	getAnimu,
+	reorderSections,
+	updateEntry,
+	updateEntryFranchise,
+	updateFranchise,
+	updateFranchiseEntries,
+	updateSection,
+	updateSectionEntries,
+} from "../services/animuService";
 import type { Animu } from "../types/animu";
 import type { Entry, UpdateEntry } from "../types/entry";
+import type { UpdateFranchise } from "../types/franchise";
 import type { MediaType } from "../types/mediaType";
 import type { Status } from "../types/status";
-import { isManualSection, type Section } from "../types/section";
+import { isManualSection, type CreateSection, type Section, type UpdateSection } from "../types/section";
 
 export const useAnimu = () => {
 	return useQuery({
@@ -36,6 +50,76 @@ export const useMoveEntryToSection = () => {
 			if (source) await updateSectionEntries(source.id, source.entryIds.filter((id) => id !== entryId));
 			if (!target.entryIds.includes(entryId)) await updateSectionEntries(target.id, [...target.entryIds, entryId]);
 		},
+		onSuccess: () => queryClient.invalidateQueries({ queryKey: ["animu"] }),
+	});
+};
+
+/** Creates a new manual section. */
+export const useCreateSection = () => {
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: (section: CreateSection) => createSection(section),
+		onSuccess: () => queryClient.invalidateQueries({ queryKey: ["animu"] }),
+	});
+};
+
+/** Renames a section and/or changes its group. */
+export const useUpdateSection = () => {
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: ({ sectionId, patch }: { sectionId: string; patch: UpdateSection }) => updateSection(sectionId, patch),
+		onSuccess: () => queryClient.invalidateQueries({ queryKey: ["animu"] }),
+	});
+};
+
+/** Permanently deletes a section. Entries that belonged to it simply lose that membership. */
+export const useDeleteSection = () => {
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: (sectionId: string) => deleteSection(sectionId),
+		onSuccess: () => queryClient.invalidateQueries({ queryKey: ["animu"] }),
+	});
+};
+
+/** Reassigns every section's `order` to its index in `sectionIds` — callers pass the full, reordered id list. */
+export const useReorderSections = () => {
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: (sectionIds: string[]) => reorderSections(sectionIds),
+		onSuccess: () => queryClient.invalidateQueries({ queryKey: ["animu"] }),
+	});
+};
+
+/** Renames a franchise and/or changes its cover. */
+export const useUpdateFranchise = () => {
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: ({ franchiseId, patch }: { franchiseId: string; patch: UpdateFranchise }) => updateFranchise(franchiseId, patch),
+		onSuccess: () => queryClient.invalidateQueries({ queryKey: ["animu"] }),
+	});
+};
+
+/** Permanently deletes a franchise. Member entries simply lose that membership. */
+export const useDeleteFranchise = () => {
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: (franchiseId: string) => deleteFranchise(franchiseId),
+		onSuccess: () => queryClient.invalidateQueries({ queryKey: ["animu"] }),
+	});
+};
+
+/** Reorders (or removes) entries within a franchise's watch order. */
+export const useReorderFranchiseEntries = () => {
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: ({ franchiseId, entryIds }: { franchiseId: string; entryIds: string[] }) => updateFranchiseEntries(franchiseId, entryIds),
 		onSuccess: () => queryClient.invalidateQueries({ queryKey: ["animu"] }),
 	});
 };

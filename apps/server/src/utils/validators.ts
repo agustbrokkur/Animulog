@@ -1,6 +1,7 @@
 import { MEDIA_TYPES, GROUP_TYPES, STATUSES } from "../models/animu.model.ts";
 import type { CreateEntry, UpdateEntry, EntrySource } from "../models/entry.model.ts";
 import type { CreateSection, UpdateSection } from "../models/section.model.ts";
+import type { UpdateFranchise } from "../models/franchise.model.ts";
 
 export function isValidId(value: string): boolean {
     return typeof value === "string" && value.length > 0;
@@ -86,6 +87,26 @@ export function validateCreateSection(section: CreateSection): string | null {
         return null;
     }
     return "Invalid section kind";
+}
+
+export function validateFranchiseEntries(franchiseEntryList: string[]): string | null {
+    if (!isValidIdArray(franchiseEntryList)) {
+        return "Invalid franchise entry list";
+    }
+    return null;
+}
+
+export function validateUpdateFranchise(franchise: UpdateFranchise): string | null {
+    if (!franchise || typeof franchise !== "object" || Array.isArray(franchise)) {
+        return "Invalid franchise";
+    }
+    if (!isValidString(franchise.title)) {
+        return "Invalid franchise title";
+    }
+    if (!isValidUrl(franchise.coverUrl)) {
+        return "Invalid coverUrl";
+    }
+    return null;
 }
 
 export function validateCreateEntry(entry: CreateEntry): string | null {

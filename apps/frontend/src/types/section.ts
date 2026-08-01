@@ -31,6 +31,10 @@ export type Section = ManualSection | SmartSection;
 export const isManualSection = (s: Section): s is ManualSection => s.kind === "manual";
 export const isSmartSection = (s: Section): s is SmartSection => s.kind === "smart";
 
+/** Frontend section creation is manual-only for now — smart-section filters aren't evaluated on the frontend yet. */
+export type CreateSection = { label: string; group: GroupType; system: false; kind: "manual" };
+export type UpdateSection = Pick<Section, "label" | "group">;
+
 /**
  * Manual sections store membership directly; smart sections derive it from `filter`,
  * which isn't evaluated on the frontend yet — treated as empty until that lands.

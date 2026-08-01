@@ -7,3 +7,7 @@ export type Franchise = {
     /** Watch order — must be stored, not derivable. */
     entryIds: EntryId[];
 };
+
+export type UpdateFranchise = Pick<Franchise, "title" | "coverUrl">;
+
+export type FranchiseEntries = { entryIds: EntryId[] };

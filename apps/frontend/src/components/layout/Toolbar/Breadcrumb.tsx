@@ -1,4 +1,4 @@
-import { Link, useParams } from "react-router";
+import { Link, useLocation, useParams } from "react-router";
 import styled from "styled-components";
 import { ChevronRight } from "lucide-react";
 import { useAnimu } from "../../../hooks/useAnime";
@@ -45,7 +45,8 @@ const Separator = styled(ChevronRight)`
 `;
 
 export const Breadcrumb = () => {
-	const { animeId, sectionId } = useParams();
+	const { animeId, sectionId, franchiseId } = useParams();
+	const { pathname } = useLocation();
 	const { data: animu } = useAnimu();
 
 	const entryItem = animeId ? animu?.entries[animeId] : undefined;
@@ -56,6 +57,8 @@ export const Breadcrumb = () => {
 			? Object.values(animu?.sections ?? {}).find((s) => sectionEntryIds(s).includes(animeId))
 			: undefined;
 
+	const franchiseItem = franchiseId ? animu?.franchises[franchiseId] : undefined;
+
 	const crumbs = [{ label: "Overview", path: "/" }];
 
 	if (entryItem) {
@@ -63,6 +66,15 @@ export const Breadcrumb = () => {
 		crumbs.push({ label: resolveEntry(entryItem).displayTitle, path: `/anime/${entryItem.id}` });
 	} else if (sectionItem) {
 		crumbs.push({ label: sectionItem.label, path: `/sections/${sectionItem.id}` });
+	} else if (franchiseItem) {
+		crumbs.push({ label: "Franchises", path: "/franchises" });
+		crumbs.push({ label: franchiseItem.title, path: `/franchises/${franchiseItem.id}` });
+	} else if (pathname === "/anime") {
+		crumbs.push({ label: "Library", path: "/anime" });
+	} else if (pathname === "/sections") {
+		crumbs.push({ label: "Sections", path: "/sections" });
+	} else if (pathname === "/franchises") {
+		crumbs.push({ label: "Franchises", path: "/franchises" });
 	}
 
 	return (

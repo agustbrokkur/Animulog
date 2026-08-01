@@ -36,7 +36,7 @@ export const TriggerButton = styled.button<{ $transparent?: boolean }>`
 
 export const Panel = styled.div`
 	position: fixed;
-	z-index: 1000;
+	z-index: 2100;
 	width: 180px;
 	max-height: min(320px, calc(100vh - 32px));
 	overflow-y: auto;

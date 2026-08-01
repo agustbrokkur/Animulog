@@ -1,6 +1,6 @@
 import { type Request, type Response, Router } from "express";
 import type { CreateSection, ManualSection, Section, SectionEntries, SmartSection } from "../models/section.model.ts";
-import { isValidId, validateCreateSection, validateSectionEntries, validateUpdateSection } from "../utils/validators.ts";
+import { isValidId, isValidIdArray, validateCreateSection, validateSectionEntries, validateUpdateSection } from "../utils/validators.ts";
 import { asSectionId, newSectionId } from "../models/ids.ts";
 import { handleError } from "../utils/errorUtils.ts";
 import { readAnimuData, writeAnimuData } from "../utils/fileUtils.ts";
@@ -98,6 +98,38 @@ sectionRouter.get("/:id", (req: Request<{ id: string }>, res: Response) => {
         res.status(200).json(section);
     } catch (error: unknown) {
         handleError(res, error, "Error fetching sections");
+    }
+});
+
+// PUT /api/animu/sections/reorder
+// Reassigns every section's `order` to its index in `sectionIds` — registered before `/:id` so it isn't
+// swallowed by that dynamic route.
+sectionRouter.put("/reorder", (req: Request<any, any, { sectionIds: string[] }>, res: Response) => {
+    try {
+        const { sectionIds } = req.body;
+        if (!isValidIdArray(sectionIds)) {
+            return res.status(400).json({
+                message: "Invalid section id list"
+            });
+        }
+
+        const data = readAnimuData();
+        const existingIds = Object.keys(data.sections);
+
+        if (sectionIds.length !== existingIds.length || !existingIds.every(id => sectionIds.includes(id))) {
+            return res.status(400).json({
+                message: "sectionIds must be a permutation of every existing section id"
+            });
+        }
+
+        sectionIds.forEach((id, index) => {
+            data.sections[asSectionId(id)].order = index;
+        });
+        writeAnimuData(data);
+
+        res.status(200).json(sectionIds);
+    } catch (error: unknown) {
+        handleError(res, error, "Error reordering sections");
     }
 });
 

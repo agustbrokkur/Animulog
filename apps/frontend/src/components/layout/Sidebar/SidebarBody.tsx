@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import { GROUP_TYPES, GROUP_ICONS, GROUP_TYPE_MAPPINGS, GROUP_COLOR_VARS, type GroupType } from "../../../types/groupType";
 import { useAnimu } from "../../../hooks/useAnime";
 import { sectionEntryIds, sortedSections } from "../../../types/section";
-import { CircleSmallIcon, LayoutDashboard, Star } from "lucide-react";
+import { CircleSmallIcon, FolderCog, FolderOpen, Library, LayoutDashboard, Star } from "lucide-react";
 
 interface Grouping {
 	name: string;
@@ -152,9 +152,21 @@ export const SidebarBody = () => {
 					<LayoutDashboard size={14} />
 					<span>Dashboard</span>
 				</NavItem>
+				<NavItem to="/anime" end>
+					<Library size={14} />
+					<span>Library</span>
+				</NavItem>
 				<NavItem to="/favorites">
 					<Star size={14} />
 					<span>Favorites</span>
+				</NavItem>
+				<NavItem to="/sections" end>
+					<FolderCog size={14} />
+					<span>Sections</span>
+				</NavItem>
+				<NavItem to="/franchises" end>
+					<FolderOpen size={14} />
+					<span>Franchises</span>
 				</NavItem>
 			</NavGroup>
 

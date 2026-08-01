@@ -6,6 +6,8 @@ import { SectionView } from "./pages/SectionPage";
 import { EntryView } from "./pages/EntryPage";
 import { EntriesIndexView } from "./pages/EntryIndexPage";
 import { SectionsIndexView } from "./pages/SectionIndexPage";
+import { FranchiseIndexView } from "./pages/FranchiseIndexPage";
+import { FranchiseView } from "./pages/FranchisePage";
 import { SearchView } from "./pages/SearchPage";
 import { StatisticsView } from "./pages/StatisticsPage";
 import { SourceManagerView } from "./pages/SourceManagerPage";
@@ -23,6 +25,9 @@ function App() {
 
 				<Route path="/anime" element={<EntriesIndexView />} />
 				<Route path="/anime/:animeId" element={<EntryView />} />
+
+				<Route path="/franchises" element={<FranchiseIndexView />} />
+				<Route path="/franchises/:franchiseId" element={<FranchiseView />} />
 
 				<Route path="/search" element={<SearchView />} />
 				<Route path="/statistics" element={<StatisticsView />} />

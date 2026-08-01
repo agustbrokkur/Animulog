@@ -3,12 +3,14 @@ import { handleError } from "../utils/errorUtils.ts";
 import { readAnimuData } from "../utils/fileUtils.ts";
 import { sectionRouter } from "./sections.ts";
 import { entryRouter } from "./entries.ts";
+import { franchiseRouter } from "./franchises.ts";
 import { createBackup } from "../utils/backup.ts";
 
 const animuRouter = Router();
 
 animuRouter.use("/sections", sectionRouter);
 animuRouter.use("/entries", entryRouter);
+animuRouter.use("/franchises", franchiseRouter);
 
 // Global
 animuRouter.get("/", (_: Request, res: Response) => {

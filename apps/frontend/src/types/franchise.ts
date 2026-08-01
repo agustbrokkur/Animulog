@@ -4,3 +4,5 @@ export type Franchise = {
 	coverUrl: string | null;
 	entryIds: string[];
 };
+
+export type UpdateFranchise = Pick<Franchise, "title" | "coverUrl">;
