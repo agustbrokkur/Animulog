@@ -18,3 +18,11 @@ export const MEDIA_TYPE_COLORS: Record<MediaType, string> = {
 	special: "#FAC775",
 	other: "#3FB6C7",
 };
+
+export const MEDIA_TYPE_LABELS: Record<MediaType, string> = {
+	movie: "Movie",
+	tv: "TV",
+	ova: "OVA",
+	special: "Special",
+	other: "Other",
+};

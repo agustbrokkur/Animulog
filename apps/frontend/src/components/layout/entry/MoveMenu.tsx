@@ -1,79 +1,54 @@
-import { useState } from "react";
-import styled from "styled-components";
-import { ArrowLeftRight } from "lucide-react";
+import { createPortal } from "react-dom";
+import { ArrowLeftRight, Check } from "lucide-react";
 import type { Section } from "../../../types/section";
 import { isManualSection } from "../../../types/section";
+import { useAnchoredPanel } from "../../../hooks/useAnchoredPanel";
+import { Wrap, TriggerButton, Panel, Option } from "./SelectMenu.styles";
 
-const Wrap = styled.div`
-	position: relative;
-`;
+interface MoveMenuProps {
+	sections: Section[];
+	entryId: string;
+	onMove: (sectionId: string) => void;
+	transparent?: boolean;
+	onOpenChange?: (open: boolean) => void;
+}
 
-const Btn = styled.button`
-	display: flex;
-	align-items: center;
-	gap: 4px;
-	font-size: 12px;
-	padding: 4px 8px;
-	border-radius: 6px;
-	border: 1px solid #2a2a2e;
-	color: #d1d5db;
-	background: none;
-	cursor: pointer;
-	&:hover {
-		border-color: #6b6b6f;
-	}
-`;
-
-const Dropdown = styled.div`
-	position: absolute;
-	z-index: 10;
-	margin-top: 4px;
-	width: 160px;
-	background: #1c1c1f;
-	border: 1px solid #2a2a2e;
-	border-radius: 6px;
-	box-shadow: 0 4px 12px rgb(0 0 0 / 0.3);
-	padding: 4px 0;
-`;
-
-const Option = styled.button`
-	width: 100%;
-	text-align: left;
-	font-size: 12px;
-	padding: 6px 12px;
-	color: #d1d5db;
-	background: none;
-	border: none;
-	cursor: pointer;
-	&:hover {
-		background: #242428;
-	}
-`;
-
-export const MoveMenu = ({ sections, onMove }: { sections: Section[]; onMove?: (id: string) => void }) => {
-	const [open, setOpen] = useState(false);
+export const MoveMenu = ({ sections, entryId, onMove, transparent, onOpenChange }: MoveMenuProps) => {
+	const { open, setOpen, anchorRef: wrapRef, panelRef, position } = useAnchoredPanel<HTMLDivElement, HTMLDivElement>(onOpenChange);
 	// Smart sections derive membership from a filter, not direct assignment — only manual sections are movable targets.
 	const manualSections = sections.filter(isManualSection);
+	const currentSectionId = manualSections.find((s) => s.entryIds.includes(entryId))?.id;
+
+	if (manualSections.length === 0) return null;
+
 	return (
-		<Wrap>
-			<Btn onClick={() => setOpen((v) => !v)}>
+		<Wrap ref={wrapRef}>
+			<TriggerButton $transparent={transparent} onClick={() => setOpen((v) => !v)}>
 				<ArrowLeftRight size={12} /> Move
-			</Btn>
-			{open && (
-				<Dropdown>
-					{manualSections.map((s) => (
-						<Option
-							key={s.id}
-							onClick={() => {
-								onMove?.(s.id);
-								setOpen(false);
-							}}
-						>
-							{s.label}
-						</Option>
-					))}
-				</Dropdown>
-			)}
+			</TriggerButton>
+
+			{open &&
+				createPortal(
+					<Panel ref={panelRef} style={{ top: position.top, left: position.left }}>
+						{manualSections.map((s) => {
+							const checked = s.id === currentSectionId;
+							return (
+								<Option
+									key={s.id}
+									$checked={checked}
+									onClick={() => {
+										if (!checked) onMove(s.id);
+										setOpen(false);
+									}}
+								>
+									{s.label}
+									{checked && <Check size={13} />}
+								</Option>
+							);
+						})}
+					</Panel>,
+					document.body,
+				)}
 		</Wrap>
 	);
 };

@@ -23,20 +23,20 @@ const Wrap = styled.div<{ $transparent?: boolean }>`
 
 const Btn = styled.button`
 	padding: 4px;
-	color: #d1d5db;
+	color: var(--text-dim);
 	background: none;
 	border: none;
 	cursor: pointer;
 
 	&:hover {
-		color: white;
+		color: var(--text);
 	}
 `;
 
 const Count = styled.span`
 	font-size: 14px;
 	font-weight: 600;
-	color: white;
+	color: var(--text);
 	min-width: 40px;
 	text-align: center;
 `;

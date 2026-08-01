@@ -2,6 +2,9 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getAnimu, updateEntry, updateSectionEntries } from "../services/animuService";
 import type { Animu } from "../types/animu";
 import type { Entry } from "../types/entry";
+import type { MediaType } from "../types/mediaType";
+import type { Status } from "../types/status";
+import { isManualSection, type Section } from "../types/section";
 
 export const useAnimu = () => {
 	return useQuery({
@@ -15,6 +18,24 @@ export const useReorderSectionEntries = () => {
 
 	return useMutation({
 		mutationFn: ({ sectionId, entryIds }: { sectionId: string; entryIds: string[] }) => updateSectionEntries(sectionId, entryIds),
+		onSuccess: () => queryClient.invalidateQueries({ queryKey: ["animu"] }),
+	});
+};
+
+/** Moves an entry into `targetSectionId`, assuming an entry belongs to at most one manual section at a time — so it also removes the entry from whichever manual section currently holds it, if any. */
+export const useMoveEntryToSection = () => {
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: async ({ entryId, targetSectionId, sections }: { entryId: string; targetSectionId: string; sections: Section[] }) => {
+			const target = sections.find((s) => s.id === targetSectionId);
+			if (!target || !isManualSection(target)) return;
+
+			const source = sections.filter(isManualSection).find((s) => s.id !== targetSectionId && s.entryIds.includes(entryId));
+
+			if (source) await updateSectionEntries(source.id, source.entryIds.filter((id) => id !== entryId));
+			if (!target.entryIds.includes(entryId)) await updateSectionEntries(target.id, [...target.entryIds, entryId]);
+		},
 		onSuccess: () => queryClient.invalidateQueries({ queryKey: ["animu"] }),
 	});
 };
@@ -41,6 +62,64 @@ export const useAdjustEntryProgress = () => {
 						...previous.entries,
 						[entry.id]: { ...previous.entries[entry.id], progress },
 					},
+				});
+			}
+
+			return { previous };
+		},
+		onError: (_error, _vars, context) => {
+			if (context?.previous) queryClient.setQueryData(["animu"], context.previous);
+		},
+		onSettled: () => queryClient.invalidateQueries({ queryKey: ["animu"] }),
+	});
+};
+
+/** Changes an entry's media type. */
+export const useUpdateEntryMediaType = () => {
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: ({ entry, mediaType }: { entry: Entry; mediaType: MediaType }) => {
+			const { id, source, ...rest } = entry;
+			return updateEntry(id, { ...rest, mediaType, timestamps: { ...entry.timestamps, updated: Date.now() } });
+		},
+		onMutate: async ({ entry, mediaType }) => {
+			await queryClient.cancelQueries({ queryKey: ["animu"] });
+			const previous = queryClient.getQueryData<Animu>(["animu"]);
+
+			if (previous?.entries[entry.id]) {
+				queryClient.setQueryData<Animu>(["animu"], {
+					...previous,
+					entries: { ...previous.entries, [entry.id]: { ...previous.entries[entry.id], mediaType } },
+				});
+			}
+
+			return { previous };
+		},
+		onError: (_error, _vars, context) => {
+			if (context?.previous) queryClient.setQueryData(["animu"], context.previous);
+		},
+		onSettled: () => queryClient.invalidateQueries({ queryKey: ["animu"] }),
+	});
+};
+
+/** Changes an entry's status. */
+export const useUpdateEntryStatus = () => {
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: ({ entry, status }: { entry: Entry; status: Status }) => {
+			const { id, source, ...rest } = entry;
+			return updateEntry(id, { ...rest, status, timestamps: { ...entry.timestamps, updated: Date.now() } });
+		},
+		onMutate: async ({ entry, status }) => {
+			await queryClient.cancelQueries({ queryKey: ["animu"] });
+			const previous = queryClient.getQueryData<Animu>(["animu"]);
+
+			if (previous?.entries[entry.id]) {
+				queryClient.setQueryData<Animu>(["animu"], {
+					...previous,
+					entries: { ...previous.entries, [entry.id]: { ...previous.entries[entry.id], status } },
 				});
 			}
 

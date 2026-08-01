@@ -3,11 +3,18 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 // Positions a portaled panel below an anchor element, keeping it in place on
 // resize/scroll, and closes it on outside clicks.
-export function useAnchoredPanel<TAnchor extends HTMLElement, TPanel extends HTMLElement>() {
+export function useAnchoredPanel<TAnchor extends HTMLElement, TPanel extends HTMLElement>(onOpenChange?: (open: boolean) => void) {
 	const [open, setOpen] = useState(false);
 	const anchorRef = useRef<TAnchor>(null);
 	const panelRef = useRef<TPanel>(null);
 	const [position, setPosition] = useState({ top: 0, left: 0 });
+
+	// Ref so callers can pass an inline callback without retriggering this effect on every render.
+	const onOpenChangeRef = useRef(onOpenChange);
+	onOpenChangeRef.current = onOpenChange;
+	useEffect(() => {
+		onOpenChangeRef.current?.(open);
+	}, [open]);
 
 	useLayoutEffect(() => {
 		if (!open) return;

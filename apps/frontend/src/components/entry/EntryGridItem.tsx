@@ -3,10 +3,16 @@ import styled from "styled-components";
 import { Star } from "lucide-react";
 import type { Entry } from "../../types/entry";
 import { resolveEntry } from "../../types/entry";
+import type { Section } from "../../types/section";
+import { STATUS_COLORS } from "../../types/status";
 import { EpisodeStepper } from "../layout/entry/EpisodeStepper";
+import { MoveMenu } from "../layout/entry/MoveMenu";
+import { MediaTypeMenu } from "../layout/entry/MediaTypeMenu";
+import { StatusMenu } from "../layout/entry/StatusMenu";
 import { OpenButton } from "../layout/entry/OpenButton";
 import React from "react";
-import { useAdjustEntryProgress } from "../../hooks/useAnime";
+import { useAdjustEntryProgress, useMoveEntryToSection, useUpdateEntryMediaType, useUpdateEntryStatus } from "../../hooks/useAnime";
+import { useOpenMenuTracker } from "../../hooks/useOpenMenuTracker";
 
 const Wrap = styled.div`
 	display: flex;
@@ -39,14 +45,14 @@ const Img = styled.img`
 	transition: transform 200ms;
 `;
 
-const ProgressBadge = styled.div`
+const ProgressBadge = styled.div<{ $color: string }>`
 	position: absolute;
 	top: 6px;
 	left: 6px;
-	font-size: 11px;
+	font-size: 12px;
 	font-weight: 600;
-	color: white;
-	background: rgb(0 0 0 / 0.6);
+	color: ${({ $color }) => $color};
+	background: rgb(0 0 0 / 0.8);
 	padding: 2px 6px;
 	border-radius: 999px;
 	opacity: 1;
@@ -64,15 +70,15 @@ const RatingBadge = styled.div`
 	display: flex;
 	align-items: center;
 	gap: 3px;
-	font-size: 11px;
+	font-size: 12px;
 	font-weight: 600;
 	color: #fbbf24;
-	background: rgb(0 0 0 / 0.6);
+	background: rgb(0 0 0 / 0.8);
 	padding: 2px 6px;
 	border-radius: 999px;
 `;
 
-const HoverScrim = styled.div`
+const HoverScrim = styled.div<{ $forceOpen?: boolean }>`
 	position: absolute;
 	inset: 0;
 	background: rgb(0 0 0 / 0.75);
@@ -82,13 +88,23 @@ const HoverScrim = styled.div`
 	justify-content: flex-end;
 	gap: 6px;
 	padding: 10px;
-	opacity: 0;
-	pointer-events: none;
+	opacity: ${({ $forceOpen }) => ($forceOpen ? 1 : 0)};
+	pointer-events: ${({ $forceOpen }) => ($forceOpen ? "auto" : "none")};
 	transition: opacity 150ms;
 
 	${Card}:hover & {
 		opacity: 1;
 		pointer-events: auto;
+	}
+`;
+
+const ScrimRow = styled.div`
+	display: flex;
+	align-items: center;
+	gap: 6px;
+
+	> a {
+		flex: 1;
 	}
 `;
 
@@ -118,19 +134,25 @@ const Title = styled.a`
 
 interface Props {
 	entry: Entry;
+	sections: Section[];
 }
 
-export const EntryGridItem = React.memo(({ entry }: Props) => {
+export const EntryGridItem = React.memo(({ entry, sections }: Props) => {
 	const { displayTitle, displayCover } = resolveEntry(entry);
 	const total = entry.source?.totalEpisodes ?? null;
+	const color = STATUS_COLORS[entry.status];
 	const { mutate: adjustProgress } = useAdjustEntryProgress();
+	const { mutate: moveEntry } = useMoveEntryToSection();
+	const { mutate: updateMediaType } = useUpdateEntryMediaType();
+	const { mutate: updateStatus } = useUpdateEntryStatus();
+	const { anyOpen: menuOpen, setMenuOpen } = useOpenMenuTracker();
 
 	return (
 		<Wrap>
 			<Card>
 				<Img src={displayCover ?? undefined} loading="lazy" decoding="async" />
 
-				<ProgressBadge>
+				<ProgressBadge $color={color}>
 					{entry.progress ?? 0} / {total ?? "?"}
 				</ProgressBadge>
 
@@ -141,9 +163,27 @@ export const EntryGridItem = React.memo(({ entry }: Props) => {
 					</RatingBadge>
 				)}
 
-				<HoverScrim>
+				<HoverScrim $forceOpen={menuOpen}>
 					<EpisodeStepper current={entry.progress ?? 0} total={total ?? undefined} onChange={(delta) => adjustProgress({ entry, delta })} transparent />
-					<OpenButton to={`/anime/${entry.id}`} transparent />
+					<ScrimRow>
+						<MediaTypeMenu
+							mediaType={entry.mediaType}
+							onChange={(mediaType) => updateMediaType({ entry, mediaType })}
+							onOpenChange={(open) => setMenuOpen("mediaType", open)}
+							transparent
+						/>
+						<StatusMenu status={entry.status} onChange={(status) => updateStatus({ entry, status })} onOpenChange={(open) => setMenuOpen("status", open)} transparent />
+					</ScrimRow>
+					<ScrimRow>
+						<MoveMenu
+							sections={sections}
+							entryId={entry.id}
+							onMove={(sectionId) => moveEntry({ entryId: entry.id, targetSectionId: sectionId, sections })}
+							onOpenChange={(open) => setMenuOpen("move", open)}
+							transparent
+						/>
+						<OpenButton to={`/anime/${entry.id}`} transparent />
+					</ScrimRow>
 				</HoverScrim>
 			</Card>
 

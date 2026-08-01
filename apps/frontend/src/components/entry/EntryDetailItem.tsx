@@ -9,13 +9,16 @@ import { EntryCover } from "../layout/entry/EntryCover";
 import { EpisodeProgress } from "../layout/entry/EpisodeProgress";
 import { EpisodeStepper } from "../layout/entry/EpisodeStepper";
 import { MoveMenu } from "../layout/entry/MoveMenu";
+import { MediaTypeMenu } from "../layout/entry/MediaTypeMenu";
+import { StatusMenu } from "../layout/entry/StatusMenu";
 import { OpenButton } from "../layout/entry/OpenButton";
 import { EntryTitle } from "../layout/entry/EntryTitle";
 import { EntryText } from "../layout/entry/EntryText";
 import { EntryPill } from "../layout/entry/EntryPill";
 import { Actions, Card, Info, Row } from "./EntryDetailItem.styles";
 import React from "react";
-import { useAdjustEntryProgress } from "../../hooks/useAnime";
+import { useAdjustEntryProgress, useMoveEntryToSection, useUpdateEntryMediaType, useUpdateEntryStatus } from "../../hooks/useAnime";
+import { useOpenMenuTracker } from "../../hooks/useOpenMenuTracker";
 
 const STATUS_COLORS: Record<Status, [string, string, string]> = {
 	unsorted: ["#9ca3af", "rgba(55,65,81,0.4)", "#374151"],
@@ -25,8 +28,6 @@ const STATUS_COLORS: Record<Status, [string, string, string]> = {
 	watched: ["#5DCAA5", "rgba(19,78,74,0.4)", "#115e59"],
 	dropped: ["#f87171", "rgba(127,29,29,0.4)", "#991b1b"],
 };
-
-const noop = () => {};
 
 interface EntryDetailItemProps {
 	entry: Entry;
@@ -39,6 +40,10 @@ export const EntryDetailItem = React.memo(({ entry, order, sections }: EntryDeta
 	const { displayTitle, displayCover } = resolveEntry(entry);
 	const [statusColor, statusBg, statusBorder] = STATUS_COLORS[entry.status];
 	const { mutate: adjustProgress } = useAdjustEntryProgress();
+	const { mutate: moveEntry } = useMoveEntryToSection();
+	const { mutate: updateMediaType } = useUpdateEntryMediaType();
+	const { mutate: updateStatus } = useUpdateEntryStatus();
+	const { anyOpen: menuOpen, setMenuOpen } = useOpenMenuTracker();
 
 	return (
 		<Card>
@@ -87,9 +92,16 @@ export const EntryDetailItem = React.memo(({ entry, order, sections }: EntryDeta
 				{entry.source?.synopsis && <EntryText $clamp={2}>{entry.source.synopsis}</EntryText>}
 				{entry.note && <EntryText $italic>{entry.note}</EntryText>}
 
-				<Actions>
+				<Actions $forceOpen={menuOpen}>
 					<EpisodeStepper current={entry.progress ?? 0} total={entry.source?.totalEpisodes ?? undefined} onChange={(delta) => adjustProgress({ entry, delta })} />
-					<MoveMenu sections={sections} onMove={noop} />
+					<MediaTypeMenu mediaType={entry.mediaType} onChange={(mediaType) => updateMediaType({ entry, mediaType })} onOpenChange={(open) => setMenuOpen("mediaType", open)} />
+					<StatusMenu status={entry.status} onChange={(status) => updateStatus({ entry, status })} onOpenChange={(open) => setMenuOpen("status", open)} />
+					<MoveMenu
+						sections={sections}
+						entryId={entry.id}
+						onMove={(sectionId) => moveEntry({ entryId: entry.id, targetSectionId: sectionId, sections })}
+						onOpenChange={(open) => setMenuOpen("move", open)}
+					/>
 					<OpenButton to={`/anime/${entry.id}`} />
 				</Actions>
 			</Info>

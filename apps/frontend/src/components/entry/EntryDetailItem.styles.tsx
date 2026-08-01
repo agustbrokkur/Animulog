@@ -4,11 +4,12 @@ export const Card = styled.div`
 	display: flex;
 	gap: 16px;
 	padding: 12px;
-	border: 1px solid #2a2a2e;
-	border-radius: 8px;
-	transition: border-color 150ms;
+	background: var(--bg-3);
+	border: 1px solid var(--border);
+	border-radius: var(--radius-lg);
+	transition: border-color 150ms, background 150ms;
 	&:hover {
-		border-color: #6b6b6f;
+		border-color: var(--border-bright);
 	}
 	&:hover .cover img {
 		transform: scale(1.05);
@@ -31,15 +32,15 @@ export const Row = styled.div`
 	gap: 6px;
 `;
 
-export const Actions = styled.div`
+export const Actions = styled.div<{ $forceOpen?: boolean }>`
 	display: flex;
 	align-items: center;
 	gap: 8px;
 	margin-top: auto;
 	padding-top: 8px;
-	border-top: 1px solid #2a2a2e;
-	opacity: 0;
-	pointer-events: none;
+	border-top: 1px solid var(--border);
+	opacity: ${({ $forceOpen }) => ($forceOpen ? 1 : 0)};
+	pointer-events: ${({ $forceOpen }) => ($forceOpen ? "auto" : "none")};
 	transition: opacity 150ms;
 	${Card}:hover & {
 		opacity: 1;

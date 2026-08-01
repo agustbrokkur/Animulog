@@ -31,7 +31,7 @@ export const EntryRenderer = React.memo(({ entry, viewMode, order, sections, onR
 		case "list":
 			return <EntryListItem entry={entry} order={order} sections={sections} onReorder={onReorder ? (newIndex) => onReorder(entry.id, newIndex) : undefined} />;
 		case "grid":
-			return <EntryGridItem entry={entry} />;
+			return <EntryGridItem entry={entry} sections={sections} />;
 	}
 });
 

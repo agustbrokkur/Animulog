@@ -7,13 +7,14 @@ import type { Section } from "../../types/section";
 import { STATUS_COLORS } from "../../types/status";
 import { EpisodeStepper } from "../layout/entry/EpisodeStepper";
 import { MoveMenu } from "../layout/entry/MoveMenu";
+import { MediaTypeMenu } from "../layout/entry/MediaTypeMenu";
+import { StatusMenu } from "../layout/entry/StatusMenu";
 import { OpenButton } from "../layout/entry/OpenButton";
 import { EntryCoverCompact } from "../layout/entry/EntryCoverCompact";
 import { Link } from "react-router";
 import React, { useEffect, useState } from "react";
-import { useAdjustEntryProgress } from "../../hooks/useAnime";
-
-const noop = () => {};
+import { useAdjustEntryProgress, useMoveEntryToSection, useUpdateEntryMediaType, useUpdateEntryStatus } from "../../hooks/useAnime";
+import { useOpenMenuTracker } from "../../hooks/useOpenMenuTracker";
 
 /** Baseline compact card height (a minimum, not a cap — long titles grow it) — used by grids that estimate row heights, e.g. the Overview page's 2-row clip. */
 export const COMPACT_ENTRY_HEIGHT = 104;
@@ -175,15 +176,15 @@ const ProgressFill = styled.div<{ $color: string }>`
 	width: var(--percent, 0%);
 `;
 
-const Actions = styled.div`
+const Actions = styled.div<{ $forceOpen?: boolean }>`
 	position: relative;
 	z-index: 2;
 	display: flex;
 	align-items: center;
 	gap: 6px;
 	flex-shrink: 0;
-	opacity: 0;
-	pointer-events: none;
+	opacity: ${({ $forceOpen }) => ($forceOpen ? 1 : 0)};
+	pointer-events: ${({ $forceOpen }) => ($forceOpen ? "auto" : "none")};
 	transition: opacity 150ms;
 
 	${Card}:hover & {
@@ -209,6 +210,10 @@ export const EntryListItem = React.memo(({ entry, order, sections, compact = fal
 	const percent = total ? Math.min(100, (current / total) * 100) : 0;
 	const color = STATUS_COLORS[entry.status];
 	const { mutate: adjustProgress } = useAdjustEntryProgress();
+	const { mutate: moveEntry } = useMoveEntryToSection();
+	const { mutate: updateMediaType } = useUpdateEntryMediaType();
+	const { mutate: updateStatus } = useUpdateEntryStatus();
+	const { anyOpen: menuOpen, setMenuOpen } = useOpenMenuTracker();
 
 	const [orderValue, setOrderValue] = useState(order != null ? String(order) : "");
 	useEffect(() => {
@@ -281,9 +286,16 @@ export const EntryListItem = React.memo(({ entry, order, sections, compact = fal
 				</Info>
 
 				{!compact && (
-					<Actions>
+					<Actions $forceOpen={menuOpen}>
 						<EpisodeStepper current={current} total={total ?? undefined} onChange={(delta) => adjustProgress({ entry, delta })} />
-						<MoveMenu sections={sections} onMove={noop} />
+						<MediaTypeMenu mediaType={entry.mediaType} onChange={(mediaType) => updateMediaType({ entry, mediaType })} onOpenChange={(open) => setMenuOpen("mediaType", open)} />
+						<StatusMenu status={entry.status} onChange={(status) => updateStatus({ entry, status })} onOpenChange={(open) => setMenuOpen("status", open)} />
+						<MoveMenu
+							sections={sections}
+							entryId={entry.id}
+							onMove={(sectionId) => moveEntry({ entryId: entry.id, targetSectionId: sectionId, sections })}
+							onOpenChange={(open) => setMenuOpen("move", open)}
+						/>
 						<OpenButton to={`/anime/${entry.id}`} />
 					</Actions>
 				)}
