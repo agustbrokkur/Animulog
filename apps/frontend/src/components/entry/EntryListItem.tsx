@@ -11,6 +11,7 @@ import { OpenButton } from "../layout/entry/OpenButton";
 import { EntryCoverCompact } from "../layout/entry/EntryCoverCompact";
 import { Link } from "react-router";
 import React, { useEffect, useState } from "react";
+import { useAdjustEntryProgress } from "../../hooks/useAnime";
 
 const noop = () => {};
 
@@ -207,6 +208,7 @@ export const EntryListItem = React.memo(({ entry, order, sections, compact = fal
 	const current = entry.progress ?? 0;
 	const percent = total ? Math.min(100, (current / total) * 100) : 0;
 	const color = STATUS_COLORS[entry.status];
+	const { mutate: adjustProgress } = useAdjustEntryProgress();
 
 	const [orderValue, setOrderValue] = useState(order != null ? String(order) : "");
 	useEffect(() => {
@@ -280,7 +282,7 @@ export const EntryListItem = React.memo(({ entry, order, sections, compact = fal
 
 				{!compact && (
 					<Actions>
-						<EpisodeStepper current={current} total={total ?? undefined} onChange={noop} />
+						<EpisodeStepper current={current} total={total ?? undefined} onChange={(delta) => adjustProgress({ entry, delta })} />
 						<MoveMenu sections={sections} onMove={noop} />
 						<OpenButton to={`/anime/${entry.id}`} />
 					</Actions>

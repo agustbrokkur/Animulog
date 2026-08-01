@@ -1,10 +1,10 @@
 import styled from "styled-components";
-import { Link } from "react-router";
+import { Link, NavLink } from "react-router";
 import { useMemo } from "react";
 import { GROUP_TYPES, GROUP_ICONS, GROUP_TYPE_MAPPINGS, GROUP_COLOR_VARS, type GroupType } from "../../../types/groupType";
 import { useAnimu } from "../../../hooks/useAnime";
 import { sectionEntryIds, sortedSections } from "../../../types/section";
-import { CircleSmallIcon } from "lucide-react";
+import { CircleSmallIcon, LayoutDashboard, Star } from "lucide-react";
 
 interface Grouping {
 	name: string;
@@ -83,6 +83,41 @@ const SectionName = styled.span`
 	line-height: 1.6;
 `;
 
+const NavGroup = styled.div`
+	flex-shrink: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	padding: 6px;
+	border-radius: 10px;
+	background: color-mix(in srgb, var(--color-brand) 6%, transparent);
+	border: 1px solid color-mix(in srgb, var(--color-brand) 18%, transparent);
+`;
+
+const NavItem = styled(NavLink)`
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	color: #d1d5db;
+	font-size: 15px;
+	padding: 7px 10px;
+	border-radius: 6px;
+	text-decoration: none;
+	transition:
+		background 150ms,
+		color 150ms;
+
+	&:hover {
+		color: white;
+		background: color-mix(in srgb, var(--color-brand) 25%, transparent);
+	}
+
+	&.active {
+		color: var(--color-brand);
+		background: color-mix(in srgb, var(--color-brand) 16%, transparent);
+	}
+`;
+
 const SectionCount = styled.span<{ $color: string }>`
 	font-size: 15px;
 	font-weight: 600;
@@ -112,6 +147,17 @@ export const SidebarBody = () => {
 
 	return (
 		<Body>
+			<NavGroup>
+				<NavItem to="/" end>
+					<LayoutDashboard size={14} />
+					<span>Dashboard</span>
+				</NavItem>
+				<NavItem to="/favorites">
+					<Star size={14} />
+					<span>Favorites</span>
+				</NavItem>
+			</NavGroup>
+
 			{GROUP_TYPES.map((groupType) => {
 				const Icon = GROUP_ICONS[groupType];
 				const color = GROUP_COLOR_VARS[groupType];

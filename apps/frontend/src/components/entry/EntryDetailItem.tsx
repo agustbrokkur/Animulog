@@ -15,6 +15,7 @@ import { EntryText } from "../layout/entry/EntryText";
 import { EntryPill } from "../layout/entry/EntryPill";
 import { Actions, Card, Info, Row } from "./EntryDetailItem.styles";
 import React from "react";
+import { useAdjustEntryProgress } from "../../hooks/useAnime";
 
 const STATUS_COLORS: Record<Status, [string, string, string]> = {
 	unsorted: ["#9ca3af", "rgba(55,65,81,0.4)", "#374151"],
@@ -37,6 +38,7 @@ export const EntryDetailItem = React.memo(({ entry, order, sections }: EntryDeta
 	const Icon = MEDIA_ICONS[entry.mediaType];
 	const { displayTitle, displayCover } = resolveEntry(entry);
 	const [statusColor, statusBg, statusBorder] = STATUS_COLORS[entry.status];
+	const { mutate: adjustProgress } = useAdjustEntryProgress();
 
 	return (
 		<Card>
@@ -86,7 +88,7 @@ export const EntryDetailItem = React.memo(({ entry, order, sections }: EntryDeta
 				{entry.note && <EntryText $italic>{entry.note}</EntryText>}
 
 				<Actions>
-					<EpisodeStepper current={entry.progress ?? 0} total={entry.source?.totalEpisodes ?? undefined} onChange={noop} />
+					<EpisodeStepper current={entry.progress ?? 0} total={entry.source?.totalEpisodes ?? undefined} onChange={(delta) => adjustProgress({ entry, delta })} />
 					<MoveMenu sections={sections} onMove={noop} />
 					<OpenButton to={`/anime/${entry.id}`} />
 				</Actions>

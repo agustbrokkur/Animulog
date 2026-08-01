@@ -53,6 +53,8 @@ export type Entry = {
 	timestamps: EntryTimestamps;
 };
 
+export type UpdateEntry = Omit<Entry, "id" | "source">;
+
 export type ResolvedEntry = Entry & { displayTitle: string; displayCover: string | null };
 
 export function resolveEntry(entry: Entry): ResolvedEntry {

@@ -6,8 +6,7 @@ import { resolveEntry } from "../../types/entry";
 import { EpisodeStepper } from "../layout/entry/EpisodeStepper";
 import { OpenButton } from "../layout/entry/OpenButton";
 import React from "react";
-
-const noop = () => {};
+import { useAdjustEntryProgress } from "../../hooks/useAnime";
 
 const Wrap = styled.div`
 	display: flex;
@@ -124,6 +123,7 @@ interface Props {
 export const EntryGridItem = React.memo(({ entry }: Props) => {
 	const { displayTitle, displayCover } = resolveEntry(entry);
 	const total = entry.source?.totalEpisodes ?? null;
+	const { mutate: adjustProgress } = useAdjustEntryProgress();
 
 	return (
 		<Wrap>
@@ -142,7 +142,7 @@ export const EntryGridItem = React.memo(({ entry }: Props) => {
 				)}
 
 				<HoverScrim>
-					<EpisodeStepper current={entry.progress ?? 0} total={total ?? undefined} onChange={noop} transparent />
+					<EpisodeStepper current={entry.progress ?? 0} total={total ?? undefined} onChange={(delta) => adjustProgress({ entry, delta })} transparent />
 					<OpenButton to={`/anime/${entry.id}`} transparent />
 				</HoverScrim>
 			</Card>

@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from "react-router";
 import { Layout } from "./components/layout/Layout";
 import { Overview } from "./pages/OverviewPage";
+import { FavoritesView } from "./pages/FavoritesPage";
 import { SectionView } from "./pages/SectionPage";
 import { EntryView } from "./pages/EntryPage";
 import { EntriesIndexView } from "./pages/EntryIndexPage";
@@ -15,6 +16,7 @@ function App() {
 		<Routes>
 			<Route element={<Layout />}>
 				<Route path="/" element={<Overview />} />
+				<Route path="/favorites" element={<FavoritesView />} />
 
 				<Route path="/sections" element={<SectionsIndexView />} />
 				<Route path="/sections/:sectionId" element={<SectionView />} />
