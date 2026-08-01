@@ -116,6 +116,9 @@ export function validateCreateEntry(entry: CreateEntry): string | null {
     if (entry.coverOverride !== null && !isValidUrl(entry.coverOverride)) {
         return "Invalid coverOverride";
     }
+    if (!isValidOptionalNumber(entry.totalEpisodesOverride)) {
+        return "Invalid totalEpisodesOverride";
+    }
     if (!isValidStringArray(entry.tags)) {
         return "Invalid tags";
     }

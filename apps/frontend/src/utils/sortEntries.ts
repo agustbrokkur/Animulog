@@ -14,7 +14,7 @@ const getSortValue = (entry: Entry, key: SortKey): number | string | null => {
 		case "episodesWatched":
 			return entry.progress;
 		case "totalEpisodes":
-			return entry.source?.totalEpisodes ?? null;
+			return resolveEntry(entry).displayTotalEpisodes;
 		case "addedAt":
 			return entry.timestamps.added;
 		case "startedAt":

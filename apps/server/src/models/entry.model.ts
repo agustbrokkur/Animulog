@@ -47,6 +47,8 @@ export type Entry = {
     progress: number | null;
 
     coverOverride: string | null;
+    /** null = defer to source.totalEpisodes */
+    totalEpisodesOverride: number | null;
     tags: string[];
 
     source: EntrySource | null; // null for custom entries (VNs, western, unmatched)

@@ -4,7 +4,8 @@ import { Star } from "lucide-react";
 import type { Entry } from "../../types/entry";
 import { resolveEntry } from "../../types/entry";
 import type { Section } from "../../types/section";
-import { STATUS_COLORS } from "../../types/status";
+import { STATUS_COLORS, STATUS_LABELS } from "../../types/status";
+import { MEDIA_ICONS, MEDIA_TYPE_LABELS } from "../../types/mediaType";
 import { EpisodeStepper } from "../layout/entry/EpisodeStepper";
 import { MoveMenu } from "../layout/entry/MoveMenu";
 import { MediaTypeMenu } from "../layout/entry/MediaTypeMenu";
@@ -147,18 +148,70 @@ const Note = styled.span<{ $compact: boolean }>`
 	overflow: hidden;
 `;
 
+const SubTitleRow = styled.div`
+	display: flex;
+	flex-direction: column;
+	gap: 1px;
+`;
+
+const SubTitleText = styled.span<{ $dim?: boolean }>`
+	font-size: 12px;
+	color: ${({ $dim }) => ($dim ? "var(--text-dimmer)" : "var(--text-dim)")};
+`;
+
+const BadgeRow = styled.div`
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 10px;
+	font-size: 12px;
+`;
+
+const StatusText = styled.span<{ $color: string }>`
+	display: flex;
+	align-items: center;
+	gap: 5px;
+	font-weight: 600;
+	color: ${({ $color }) => $color};
+
+	&::before {
+		content: "";
+		width: 6px;
+		height: 6px;
+		border-radius: 999px;
+		background: ${({ $color }) => $color};
+	}
+`;
+
+const MediaTypeText = styled.span`
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	color: var(--text-dim);
+`;
+
+const DatesRow = styled.div`
+	display: flex;
+	flex-wrap: wrap;
+	gap: 12px;
+	font-size: 12px;
+	color: var(--text-dimmer);
+	font-family: var(--font-mono);
+`;
+
 const Meta = styled.div<{ $compact: boolean }>`
 	display: flex;
+	flex-wrap: wrap;
 	align-items: center;
 	gap: 8px;
 	font-size: ${({ $compact }) => ($compact ? "11px" : "13px")};
 `;
 
-const Rating = styled.span`
+const Rating = styled.span<{ $color: string }>`
 	display: flex;
 	align-items: center;
 	gap: 3px;
-	color: #fbbf24;
+	color: ${({ $color }) => $color};
 	font-weight: 600;
 `;
 
@@ -212,12 +265,17 @@ interface Props {
 	onReorder?: (newIndex: number) => void;
 }
 
+const formatDate = (ms: number) => new Date(ms).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+
 export const EntryListItem = React.memo(({ entry, order, sections, compact = false, onReorder }: Props) => {
-	const { displayTitle, displayCover } = resolveEntry(entry);
-	const total = entry.source?.totalEpisodes ?? null;
+	const { displayTitle, displayCover, displayTotalEpisodes: total } = resolveEntry(entry);
 	const current = entry.progress ?? 0;
 	const percent = total ? Math.min(100, (current / total) * 100) : 0;
 	const color = STATUS_COLORS[entry.status];
+	const ratingValue = entry.score ?? entry.source?.communityRating ?? null;
+	const ratingColor = entry.score != null ? "var(--color-accent)" : "#fbbf24";
+	const altTitle = entry.source?.englishTitle && entry.source.englishTitle !== displayTitle ? entry.source.englishTitle : null;
+	const MediaIcon = MEDIA_ICONS[entry.mediaType];
 	const { mutate: adjustProgress } = useAdjustEntryProgress();
 	const { mutate: moveEntry } = useMoveEntryToSection();
 	const { mutate: updateMediaType } = useUpdateEntryMediaType();
@@ -271,14 +329,30 @@ export const EntryListItem = React.memo(({ entry, order, sections, compact = fal
 						{displayTitle}
 					</Title>
 
-					{entry.note ? (
+					{!compact && (altTitle || entry.source?.japaneseTitle) && (
+						<SubTitleRow>
+							{altTitle && <SubTitleText>{altTitle}</SubTitleText>}
+							{entry.source?.japaneseTitle && <SubTitleText $dim>{entry.source.japaneseTitle}</SubTitleText>}
+						</SubTitleRow>
+					)}
+
+					{!compact && (
+						<BadgeRow>
+							<StatusText $color={color}>{STATUS_LABELS[entry.status]}</StatusText>
+							<MediaTypeText>
+								<MediaIcon size={13} /> {MEDIA_TYPE_LABELS[entry.mediaType]}
+							</MediaTypeText>
+						</BadgeRow>
+					)}
+
+					{compact && entry.note ? (
 						<Note $compact={compact}>{entry.note}</Note>
 					) : (
 						<Meta $compact={compact}>
-							{entry.source?.communityRating != null && (
-								<Rating>
-									<Star size={compact ? 11 : 13} fill="#fbbf24" />
-									{entry.source.communityRating}
+							{ratingValue != null && (
+								<Rating $color={ratingColor}>
+									<Star size={compact ? 11 : 13} fill={ratingColor} />
+									{ratingValue}
 								</Rating>
 							)}
 							{total != null && (
@@ -293,6 +367,15 @@ export const EntryListItem = React.memo(({ entry, order, sections, compact = fal
 							)}
 						</Meta>
 					)}
+
+					{!compact && (
+						<DatesRow>
+							{entry.source?.airedFrom != null && <span>Released {formatDate(entry.source.airedFrom)}</span>}
+							<span>Added {formatDate(entry.timestamps.added)}</span>
+						</DatesRow>
+					)}
+
+					{!compact && entry.note && <Note $compact={compact}>{entry.note}</Note>}
 				</Info>
 
 				{!compact && (

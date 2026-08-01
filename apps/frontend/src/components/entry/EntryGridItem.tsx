@@ -65,7 +65,7 @@ const ProgressBadge = styled.div<{ $color: string }>`
 	}
 `;
 
-const RatingBadge = styled.div`
+const RatingBadge = styled.div<{ $color: string }>`
 	position: absolute;
 	top: 6px;
 	right: 6px;
@@ -74,7 +74,7 @@ const RatingBadge = styled.div`
 	gap: 3px;
 	font-size: 12px;
 	font-weight: 600;
-	color: #fbbf24;
+	color: ${({ $color }) => $color};
 	background: rgb(0 0 0 / 0.8);
 	padding: 2px 6px;
 	border-radius: 999px;
@@ -151,9 +151,10 @@ interface Props {
 }
 
 export const EntryGridItem = React.memo(({ entry, sections }: Props) => {
-	const { displayTitle, displayCover } = resolveEntry(entry);
-	const total = entry.source?.totalEpisodes ?? null;
+	const { displayTitle, displayCover, displayTotalEpisodes: total } = resolveEntry(entry);
 	const color = STATUS_COLORS[entry.status];
+	const ratingValue = entry.score ?? entry.source?.communityRating ?? null;
+	const ratingColor = entry.score != null ? "var(--color-accent)" : "#fbbf24";
 	const { mutate: adjustProgress } = useAdjustEntryProgress();
 	const { mutate: moveEntry } = useMoveEntryToSection();
 	const { mutate: updateMediaType } = useUpdateEntryMediaType();
@@ -170,10 +171,10 @@ export const EntryGridItem = React.memo(({ entry, sections }: Props) => {
 					{entry.progress ?? 0} / {total ?? "?"}
 				</ProgressBadge>
 
-				{entry.source?.communityRating != null && (
-					<RatingBadge>
-						<Star size={10} fill="#fbbf24" />
-						{entry.source.communityRating}
+				{ratingValue != null && (
+					<RatingBadge $color={ratingColor}>
+						<Star size={10} fill={ratingColor} />
+						{ratingValue}
 					</RatingBadge>
 				)}
 

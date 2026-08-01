@@ -44,11 +44,18 @@ export const FilterMenu = ({ entries, filters, onChange }: FilterMenuProps) => {
 		return Array.from(set).sort();
 	}, [entries]);
 
+	const availableTags = useMemo(() => {
+		const set = new Set<string>();
+		entries.forEach((e) => e.tags?.forEach((t) => set.add(t)));
+		return Array.from(set).sort();
+	}, [entries]);
+
 	const activeCount =
 		filters.mediaTypes.length +
 		filters.statuses.length +
 		filters.genres.length +
 		filters.studios.length +
+		filters.tags.length +
 		(filters.favoriteOnly ? 1 : 0) +
 		(isRangeActive(filters.episodeRange) ? 1 : 0) +
 		(isRangeActive(filters.scoreRange) ? 1 : 0) +
@@ -75,6 +82,11 @@ export const FilterMenu = ({ entries, filters, onChange }: FilterMenuProps) => {
 	const toggleStudio = (value: string) => {
 		const next = filters.studios.includes(value) ? filters.studios.filter((v) => v !== value) : [...filters.studios, value];
 		onChange({ ...filters, studios: next });
+	};
+
+	const toggleTag = (value: string) => {
+		const next = filters.tags.includes(value) ? filters.tags.filter((v) => v !== value) : [...filters.tags, value];
+		onChange({ ...filters, tags: next });
 	};
 
 	const setNumberRange = (key: "episodeRange" | "scoreRange", patch: Partial<NumberRange>) => {
@@ -152,6 +164,8 @@ export const FilterMenu = ({ entries, filters, onChange }: FilterMenuProps) => {
 							onToggle={toggleStudio}
 							renderLabel={(studio) => studio}
 						/>
+
+						<FilterChipSection label="Tags" items={availableTags} isChecked={(tag) => filters.tags.includes(tag)} onToggle={toggleTag} renderLabel={(tag) => tag} />
 
 						<Footer>
 							<ClearButton onClick={() => onChange(EMPTY_FILTERS)}>Clear all</ClearButton>

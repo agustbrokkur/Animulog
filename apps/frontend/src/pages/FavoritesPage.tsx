@@ -2,10 +2,9 @@ import styled from "styled-components";
 import { useDeferredValue, useMemo, useState } from "react";
 import { EntryRenderer, type ViewMode } from "../components/entry/EntryRenderer";
 import { useAnimu } from "../hooks/useAnime";
-import { SquareCheck, Star } from "lucide-react";
+import { Star } from "lucide-react";
 import { ViewModeSwitcher } from "../components/layout/actions/ViewModeSwitcher";
 import { SearchInput } from "../components/layout/actions/SearchInput";
-import { ToolbarButton } from "../components/layout/actions/ToolbarButton";
 import { AddButton } from "../components/layout/actions/AddButton";
 import type { Entry } from "../types/entry";
 import { sortedSections } from "../types/section";
@@ -150,7 +149,6 @@ export const FavoritesView = () => {
 						<SortMenu sort={sort} onChange={setSort} />
 					</SectionBodyGroup>
 					<SectionBodyGroup>
-						<ToolbarButton icon={SquareCheck} label="Select" />
 						<ViewModeSwitcher viewMode={viewMode} onViewModeChange={setViewMode} />
 						<AddButton />
 					</SectionBodyGroup>

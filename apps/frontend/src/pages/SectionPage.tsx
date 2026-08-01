@@ -2,11 +2,9 @@ import styled from "styled-components";
 import { useCallback, useDeferredValue, useMemo, useState } from "react";
 import { EntryRenderer, type ViewMode } from "../components/entry/EntryRenderer";
 import { useAnimu, useReorderSectionEntries } from "../hooks/useAnime";
-import { SquareCheck } from "lucide-react";
 import { GROUP_COLOR_VARS, GROUP_ICONS } from "../types/groupType";
 import { ViewModeSwitcher } from "../components/layout/actions/ViewModeSwitcher";
 import { SearchInput } from "../components/layout/actions/SearchInput";
-import { ToolbarButton } from "../components/layout/actions/ToolbarButton";
 import { AddButton } from "../components/layout/actions/AddButton";
 import type { Entry } from "../types/entry";
 import { isManualSection, sectionEntryIds, sortedSections } from "../types/section";
@@ -184,7 +182,6 @@ export const SectionView = () => {
 						<SortMenu sort={sort} onChange={setSort} />
 					</SectionBodyGroup>
 					<SectionBodyGroup>
-						<ToolbarButton icon={SquareCheck} label="Select" />
 						<ViewModeSwitcher viewMode={viewMode} onViewModeChange={setViewMode} />
 						<AddButton />
 					</SectionBodyGroup>

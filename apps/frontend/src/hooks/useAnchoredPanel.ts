@@ -20,9 +20,22 @@ export function useAnchoredPanel<TAnchor extends HTMLElement, TPanel extends HTM
 		if (!open) return;
 
 		const updatePosition = () => {
-			const rect = anchorRef.current?.getBoundingClientRect();
-			if (!rect) return;
-			setPosition({ top: rect.bottom + 6, left: rect.left });
+			const anchorRect = anchorRef.current?.getBoundingClientRect();
+			if (!anchorRect) return;
+
+			const margin = 8;
+			const panelHeight = panelRef.current?.getBoundingClientRect().height ?? 0;
+			const spaceBelow = window.innerHeight - anchorRect.bottom;
+			const spaceAbove = anchorRect.top;
+
+			// Flip above the anchor when there isn't enough room below but there's more room
+			// above — otherwise the panel can render past the bottom of the viewport and become
+			// unreachable (e.g. clipped behind the OS taskbar).
+			const openAbove = panelHeight > 0 && spaceBelow < panelHeight + margin && spaceAbove > spaceBelow;
+
+			const top = openAbove ? Math.max(margin, anchorRect.top - panelHeight - 6) : Math.min(anchorRect.bottom + 6, window.innerHeight - margin - panelHeight);
+
+			setPosition({ top, left: anchorRect.left });
 		};
 
 		let rafId: number | null = null;

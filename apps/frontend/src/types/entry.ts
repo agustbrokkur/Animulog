@@ -48,6 +48,8 @@ export type Entry = {
 	progress: number | null;
 
 	coverOverride: string | null;
+	/** null = defer to source.totalEpisodes */
+	totalEpisodesOverride: number | null;
 	tags: string[];
 
 	source: EntrySource | null;
@@ -57,7 +59,7 @@ export type Entry = {
 
 export type UpdateEntry = Omit<Entry, "id" | "source">;
 
-export type ResolvedEntry = Entry & { displayTitle: string; displayCover: string | null };
+export type ResolvedEntry = Entry & { displayTitle: string; displayCover: string | null; displayTotalEpisodes: number | null };
 
 export function resolveEntry(entry: Entry): ResolvedEntry {
 	return {
@@ -65,5 +67,6 @@ export function resolveEntry(entry: Entry): ResolvedEntry {
 		// `title` is always meant to be set — the fallback chain only protects entries written before this field existed.
 		displayTitle: entry.title || entry.source?.englishTitle || entry.source?.japaneseTitle || "Untitled",
 		displayCover: entry.coverOverride ?? entry.source?.coverUrl ?? null,
+		displayTotalEpisodes: entry.totalEpisodesOverride ?? entry.source?.totalEpisodes ?? null,
 	};
 }

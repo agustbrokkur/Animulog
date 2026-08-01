@@ -45,6 +45,7 @@ entryRouter.post("/", (req: Request<any, any, CreateEntry>, res: Response) => {
             score: createdEntry.score,
             progress: createdEntry.progress,
             coverOverride: createdEntry.coverOverride,
+            totalEpisodesOverride: createdEntry.totalEpisodesOverride,
             tags: createdEntry.tags,
             source: null,
             timestamps: {

@@ -17,9 +17,10 @@ export interface EntryFilters {
 	statuses: Status[];
 	genres: string[];
 	studios: string[];
+	tags: string[];
 	favoriteOnly: boolean;
 
-	episodeRange: NumberRange; // entry.source.totalEpisodes
+	episodeRange: NumberRange; // resolved total episodes (totalEpisodesOverride ?? source.totalEpisodes)
 	scoreRange: NumberRange; // your own score (entry.score)
 
 	airedRange: DateRange; // entry.source.airedFrom
@@ -36,6 +37,7 @@ export const EMPTY_FILTERS: EntryFilters = {
 	statuses: [],
 	genres: [],
 	studios: [],
+	tags: [],
 	favoriteOnly: false,
 	episodeRange: EMPTY_RANGE,
 	scoreRange: EMPTY_RANGE,
@@ -54,6 +56,7 @@ export function isFiltersActive(filters: EntryFilters): boolean {
 		filters.statuses.length > 0 ||
 		filters.genres.length > 0 ||
 		filters.studios.length > 0 ||
+		filters.tags.length > 0 ||
 		filters.favoriteOnly ||
 		isRangeActive(filters.episodeRange) ||
 		isRangeActive(filters.scoreRange) ||

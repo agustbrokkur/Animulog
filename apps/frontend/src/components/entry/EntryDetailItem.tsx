@@ -38,7 +38,7 @@ interface EntryDetailItemProps {
 
 export const EntryDetailItem = React.memo(({ entry, order, sections }: EntryDetailItemProps) => {
 	const Icon = MEDIA_ICONS[entry.mediaType];
-	const { displayTitle, displayCover } = resolveEntry(entry);
+	const { displayTitle, displayCover, displayTotalEpisodes: total } = resolveEntry(entry);
 	const [statusColor, statusBg, statusBorder] = STATUS_COLORS[entry.status];
 	const { mutate: adjustProgress } = useAdjustEntryProgress();
 	const { mutate: moveEntry } = useMoveEntryToSection();
@@ -67,11 +67,18 @@ export const EntryDetailItem = React.memo(({ entry, order, sections }: EntryDeta
 
 				<Row>
 					<EntryText $muted>Added: {new Date(entry.timestamps.added).toLocaleDateString()}</EntryText>
-					<div>{entry.source?.totalEpisodes != null && <EpisodeProgress current={entry.progress ?? 0} total={entry.source.totalEpisodes} color={statusColor} />}</div>
+					{entry.source?.airedFrom != null && <EntryText $muted>Released: {new Date(entry.source.airedFrom).toLocaleDateString()}</EntryText>}
+					<div>{total != null && <EpisodeProgress current={entry.progress ?? 0} total={total} color={statusColor} />}</div>
 				</Row>
 
 				<Row>
 					{order != null && <EntryPill>#{order}</EntryPill>}
+					{entry.score != null && (
+						<EntryPill color="var(--color-accent)" bg="var(--color-accent-dim)" border="var(--color-accent)">
+							<Star size={11} fill="var(--color-accent)" />
+							{entry.score}
+						</EntryPill>
+					)}
 					{entry.source?.communityRating != null && (
 						<EntryPill color="#fbbf24" bg="rgba(120,53,15,0.4)" border="#78350f">
 							<Star size={11} fill="#fbbf24" />
@@ -82,7 +89,7 @@ export const EntryDetailItem = React.memo(({ entry, order, sections }: EntryDeta
 						<Icon size={12} />
 						{entry.mediaType.toUpperCase()}
 					</EntryPill>
-					{entry.source?.totalEpisodes != null && <EntryPill>{entry.source.totalEpisodes} ep</EntryPill>}
+					{total != null && <EntryPill>{total} ep</EntryPill>}
 					{entry.source?.studios[0] && <EntryPill>{entry.source.studios[0]}</EntryPill>}
 					{entry.source?.genres.map((g) => (
 						<EntryPill key={g} color="#d8b4fe" bg="rgba(88,28,135,0.3)" border="#581c87">
@@ -105,7 +112,7 @@ export const EntryDetailItem = React.memo(({ entry, order, sections }: EntryDeta
 				)}
 
 				<Actions $forceOpen={menuOpen}>
-					<EpisodeStepper current={entry.progress ?? 0} total={entry.source?.totalEpisodes ?? undefined} onChange={(delta) => adjustProgress({ entry, delta })} />
+					<EpisodeStepper current={entry.progress ?? 0} total={total ?? undefined} onChange={(delta) => adjustProgress({ entry, delta })} />
 					<MediaTypeMenu mediaType={entry.mediaType} onChange={(mediaType) => updateMediaType({ entry, mediaType })} onOpenChange={(open) => setMenuOpen("mediaType", open)} />
 					<StatusMenu status={entry.status} onChange={(status) => updateStatus({ entry, status })} onOpenChange={(open) => setMenuOpen("status", open)} />
 					<MoveMenu
