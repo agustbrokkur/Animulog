@@ -13,11 +13,12 @@ export const STATUS_LABELS: Record<Status, string> = {
 	dropped: "Dropped",
 };
 
+// watching/watched intentionally match GROUP_COLORS in types/groupType.ts (the sidebar's colors for those same buckets) so the two color systems agree.
 export const STATUS_COLORS: Record<Status, string> = {
 	unsorted: "#9ca3af",
 	backlog: "#fbbf24",
-	watching: "#2dd4bf",
+	watching: "#378ADD",
 	on_hold: "#c084fc",
-	watched: "#60a5fa",
+	watched: "#5DCAA5",
 	dropped: "#f87171",
 };

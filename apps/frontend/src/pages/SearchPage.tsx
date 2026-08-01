@@ -82,13 +82,13 @@ const Container = styled.div<{ $viewMode: ViewMode }>`
       `
 			: `
         flex-direction: column;
-        gap: ${$viewMode === "list" ? "6px" : "10px"};
+        gap: 12px;
       `}
 	padding: 16px 24px 24px;
 
 	> * {
 		content-visibility: auto;
-		contain-intrinsic-size: auto ${({ $viewMode }) => ($viewMode === "list" ? "144px" : "320px")};
+		contain-intrinsic-size: auto ${({ $viewMode }) => ($viewMode === "grid" ? "320px" : "150px")};
 	}
 `;
 

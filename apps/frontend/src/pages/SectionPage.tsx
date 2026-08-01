@@ -1,7 +1,7 @@
 import styled from "styled-components";
-import { useDeferredValue, useMemo, useState } from "react";
+import { useCallback, useDeferredValue, useMemo, useState } from "react";
 import { EntryRenderer, type ViewMode } from "../components/entry/EntryRenderer";
-import { useAnimu } from "../hooks/useAnime";
+import { useAnimu, useReorderSectionEntries } from "../hooks/useAnime";
 import { SquareCheck } from "lucide-react";
 import { GROUP_COLOR_VARS, GROUP_ICONS } from "../types/groupType";
 import { ViewModeSwitcher } from "../components/layout/actions/ViewModeSwitcher";
@@ -9,7 +9,7 @@ import { SearchInput } from "../components/layout/actions/SearchInput";
 import { ToolbarButton } from "../components/layout/actions/ToolbarButton";
 import { AddButton } from "../components/layout/actions/AddButton";
 import type { Entry } from "../types/entry";
-import { sectionEntryIds, sortedSections } from "../types/section";
+import { isManualSection, sectionEntryIds, sortedSections } from "../types/section";
 import { useParams } from "react-router";
 import { useEntrySearch } from "../hooks/useEntrySearch";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
@@ -87,13 +87,13 @@ const Container = styled.div<{ $viewMode: ViewMode }>`
       `
 			: `
         flex-direction: column;
-        gap: ${$viewMode === "list" ? "6px" : "10px"};
+        gap: 12px;
       `}
 	padding: 16px 24px 24px;
 
 	> * {
 		content-visibility: auto;
-		contain-intrinsic-size: auto ${({ $viewMode }) => ($viewMode === "list" ? "144px" : "320px")};
+		contain-intrinsic-size: auto ${({ $viewMode }) => ($viewMode === "grid" ? "320px" : "150px")};
 	}
 `;
 
@@ -136,6 +136,24 @@ export const SectionView = () => {
 		return memberIds.map((id) => animu.entries[id]).filter((e): e is Entry => e != null);
 	}, [memberIds, animu]);
 	const entryOrder = useMemo(() => new Map(memberIds.map((id, index) => [id, index])), [memberIds]);
+
+	const reorderMutation = useReorderSectionEntries();
+	const handleReorder = useCallback(
+		(entryId: string, newIndex: number) => {
+			if (!section || !isManualSection(section)) return;
+			const currentIndex = memberIds.indexOf(entryId);
+			if (currentIndex === -1) return;
+
+			const clamped = Math.max(0, Math.min(newIndex, memberIds.length - 1));
+			if (clamped === currentIndex) return;
+
+			const next = [...memberIds];
+			next.splice(currentIndex, 1);
+			next.splice(clamped, 0, entryId);
+			reorderMutation.mutate({ sectionId: section.id, entryIds: next });
+		},
+		[section, memberIds, reorderMutation],
+	);
 
 	const searchedEntries = useEntrySearch(entries, debouncedSearch, "quick");
 
@@ -181,7 +199,7 @@ export const SectionView = () => {
 			) : (
 				<Container $viewMode={deferredViewMode} style={{ opacity: isStale ? 0.6 : 1 }}>
 					{visibleEntries.map((entry) => (
-						<EntryRenderer key={entry.id} entry={entry} viewMode={deferredViewMode} order={entryOrder.get(entry.id)} sections={sections} />
+						<EntryRenderer key={entry.id} entry={entry} viewMode={deferredViewMode} order={entryOrder.get(entry.id)} sections={sections} onReorder={handleReorder} />
 					))}
 				</Container>
 			)}

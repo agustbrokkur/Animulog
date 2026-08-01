@@ -9,3 +9,15 @@ export const getAnimu = async (): Promise<Animu> => {
 
 	return res.json();
 };
+
+export const updateSectionEntries = async (sectionId: string, entryIds: string[]): Promise<string[]> => {
+	const res = await fetch(`${BASE_API_URL}/animu/sections/${sectionId}/entries`, {
+		method: "PUT",
+		headers: { "Content-Type": "application/json" },
+		body: JSON.stringify({ entryIds }),
+	});
+
+	if (!res.ok) throw new Error("Failed to update section entries");
+
+	return res.json();
+};

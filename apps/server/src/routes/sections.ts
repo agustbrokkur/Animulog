@@ -103,7 +103,7 @@ sectionRouter.get("/:id", (req: Request<{ id: string }>, res: Response) => {
 
 // PUT /api/animu/sections/:id
 // Update section label
-sectionRouter.put("/sections/:id", (req: Request<{ id: string }, any, { label: string; group: Section["group"] }>, res: Response) => {
+sectionRouter.put("/:id", (req: Request<{ id: string }, any, { label: string; group: Section["group"] }>, res: Response) => {
     try {
         const { id } = req.params;
         if (!isValidId(id)) {
@@ -157,7 +157,7 @@ sectionRouter.put("/sections/:id", (req: Request<{ id: string }, any, { label: s
 
 // DELETE /api/animu/sections/:id
 // Delete section
-sectionRouter.delete("/sections/:id", (req: Request<{ id: string }>, res: Response) => {
+sectionRouter.delete("/:id", (req: Request<{ id: string }>, res: Response) => {
     try {
         const { id } = req.params;
         if (!isValidId(id)) {
@@ -189,7 +189,7 @@ sectionRouter.delete("/sections/:id", (req: Request<{ id: string }>, res: Respon
 
 // PUT /api/animu/sections/:id/entries
 // add entry to section
-sectionRouter.put("/sections/:id/entries", (req: Request<{ id: string }, any, SectionEntries>, res: Response) => {
+sectionRouter.put("/:id/entries", (req: Request<{ id: string }, any, SectionEntries>, res: Response) => {
     try {
         const { id } = req.params;
         if (!isValidId(id)) {

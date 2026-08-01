@@ -19,9 +19,9 @@ import React from "react";
 const STATUS_COLORS: Record<Status, [string, string, string]> = {
 	unsorted: ["#9ca3af", "rgba(55,65,81,0.4)", "#374151"],
 	backlog: ["#fbbf24", "rgba(120,53,15,0.4)", "#92400e"],
-	watching: ["#2dd4bf", "rgba(19,78,74,0.4)", "#115e59"],
+	watching: ["#378ADD", "rgba(30,58,138,0.4)", "#1e40af"],
 	on_hold: ["#c084fc", "rgba(88,28,135,0.4)", "#6b21a8"],
-	watched: ["#60a5fa", "rgba(30,58,138,0.4)", "#1e40af"],
+	watched: ["#5DCAA5", "rgba(19,78,74,0.4)", "#115e59"],
 	dropped: ["#f87171", "rgba(127,29,29,0.4)", "#991b1b"],
 };
 
@@ -58,7 +58,7 @@ export const EntryDetailItem = React.memo(({ entry, order, sections }: EntryDeta
 
 				<Row>
 					<EntryText $muted>Added: {new Date(entry.timestamps.added).toLocaleDateString()}</EntryText>
-					<div>{entry.source?.totalEpisodes != null && <EpisodeProgress current={entry.progress ?? 0} total={entry.source.totalEpisodes} />}</div>
+					<div>{entry.source?.totalEpisodes != null && <EpisodeProgress current={entry.progress ?? 0} total={entry.source.totalEpisodes} color={statusColor} />}</div>
 				</Row>
 
 				<Row>
