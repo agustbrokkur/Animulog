@@ -1,9 +1,9 @@
 import { type Request, type Response, Router } from "express";
-import type { CreateEntry, Entry, UpdateEntry } from "../models/entry.model.ts";
-import { isValidId, isValidString, validateCreateEntry, validateUpdateEntry } from "../utils/validators.ts";
+import type { CreateEntry, Entry, EntrySource, UpdateEntry } from "../models/entry.model.ts";
+import { isValidId, isValidString, validateCreateEntry, validateEntrySource, validateUpdateEntry } from "../utils/validators.ts";
 import { asEntryId, franchiseIdFor, newEntryId } from "../models/ids.ts";
 import { handleError } from "../utils/errorUtils.ts";
-import { readAnimuData, writeAnimuData } from "../utils/fileUtils.ts";
+import { readAnimuData, readSettings, writeAnimuData } from "../utils/fileUtils.ts";
 
 const entryRouter = Router();
 
@@ -39,7 +39,7 @@ entryRouter.post("/", (req: Request<any, any, CreateEntry>, res: Response) => {
             id: newId,
             mediaType: createdEntry.mediaType,
             title: createdEntry.title,
-            status: createdEntry.status ?? "unsorted",
+            status: createdEntry.status ?? readSettings().defaultEntryStatus,
             favorite: createdEntry.favorite,
             note: createdEntry.note,
             score: createdEntry.score,
@@ -215,6 +215,44 @@ entryRouter.put("/:id/franchise", (req: Request<{ id: string }, any, { title: st
         res.status(200).json({ ok: true });
     } catch (error: unknown) {
         handleError(res, error, "Error updating entry franchise");
+    }
+});
+
+// PUT /api/animu/entries/:id/source
+// Applies a chosen provider match (from manual search or the picker) as the entry's source cache.
+entryRouter.put("/:id/source", (req: Request<{ id: string }, any, EntrySource>, res: Response) => {
+    try {
+        const { id } = req.params;
+        if (!isValidId(id)) {
+            return res.status(400).json({
+                message: "Invalid entry id"
+            });
+        }
+
+        const source = req.body;
+        const validated = validateEntrySource(source);
+        if (validated) {
+            return res.status(400).json({
+                message: validated
+            });
+        }
+
+        const data = readAnimuData();
+        const existingEntry = data.entries[asEntryId(id)];
+
+        if (!existingEntry) {
+            return res.status(404).json({
+                message: `Entry id "${id}" not found`
+            });
+        }
+
+        existingEntry.source = source;
+        existingEntry.timestamps.updated = Date.now();
+
+        writeAnimuData(data);
+        res.status(200).json({ ok: true });
+    } catch (error: unknown) {
+        handleError(res, error, "Error updating entry source");
     }
 });
 

@@ -56,6 +56,11 @@ export type Entry = {
     timestamps: EntryTimestamps;
 };
 
+/** True when `source` is either absent or a "legacy" placeholder with no real provider data — both cases a source fetch should treat as unfetched. */
+export function needsSourceFetch(entry: Pick<Entry, "source">): boolean {
+    return entry.source === null || entry.source.provider === "legacy";
+}
+
 export type ResolvedEntry = Entry & { displayTitle: string; displayCover: string | null };
 
 export function resolve(entry: Entry): ResolvedEntry {

@@ -8,9 +8,9 @@ import { sortedSections } from "../../types/section";
 import { EntryDetailBody } from "./EntryDetailBody";
 import { Backdrop, Content, PanelWrap, ResizeHandle, Toolbar, ToolbarButton } from "./EntryDetailPanel.styles";
 
-const MIN_WIDTH = 320;
-const MAX_WIDTH = 900;
-const DEFAULT_WIDTH = 420;
+const MIN_WIDTH = 360;
+const MAX_WIDTH = 1000;
+const DEFAULT_WIDTH = 480;
 const STORAGE_KEY = "entryPanel:width";
 
 function useResizableWidth() {

@@ -1,15 +1,15 @@
 // FormDialog.tsx
 import type { ReactNode } from "react";
 import { createPortal } from "react-dom";
-import { Actions, Backdrop, Body, CancelButton, ConfirmButton, Dialog, Header, Title } from "./FormDialog.styles";
+import { Actions, Backdrop, Body, CancelButton, ConfirmButton, Dialog, Form, Header, Title } from "./FormDialog.styles";
 
 interface FormDialogProps {
 	title: string;
 	confirmLabel?: string;
 	cancelLabel?: string;
 	submitDisabled?: boolean;
-	/** Wider layout for forms with a search/pick list — the default width feels cramped once a scrollable result list is in play. */
-	wide?: boolean;
+	/** Wider layout for forms with a search/pick list — the default width feels cramped once a scrollable result list is in play. `"xl"` goes near-fullscreen (capped height, scrolling body) for card-grid browsing. */
+	wide?: boolean | "xl";
 	onSubmit: () => void;
 	onCancel: () => void;
 	children: ReactNode;
@@ -20,7 +20,7 @@ export const FormDialog = ({ title, confirmLabel = "Save", cancelLabel = "Cancel
 	createPortal(
 		<Backdrop onClick={onCancel}>
 			<Dialog $wide={wide} onClick={(e) => e.stopPropagation()}>
-				<form
+				<Form
 					onSubmit={(e) => {
 						e.preventDefault();
 						onSubmit();
@@ -38,7 +38,7 @@ export const FormDialog = ({ title, confirmLabel = "Save", cancelLabel = "Cancel
 							{confirmLabel}
 						</ConfirmButton>
 					</Actions>
-				</form>
+				</Form>
 			</Dialog>
 		</Backdrop>,
 		document.body,

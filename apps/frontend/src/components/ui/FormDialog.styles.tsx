@@ -24,15 +24,31 @@ export const Backdrop = styled.div`
 	text-align: left;
 `;
 
-export const Dialog = styled.div<{ $wide?: boolean }>`
+const DIALOG_MAX_WIDTH: Record<"normal" | "wide" | "xl", string> = {
+	normal: "420px",
+	wide: "560px",
+	xl: "min(1400px, 94vw)",
+};
+
+export const Dialog = styled.div<{ $wide?: boolean | "xl" }>`
 	background: var(--bg-2);
 	border: 1px solid var(--border-bright);
 	border-radius: var(--radius-lg);
 	width: 100%;
-	max-width: ${({ $wide }) => ($wide ? "560px" : "420px")};
+	max-width: ${({ $wide }) => DIALOG_MAX_WIDTH[$wide === "xl" ? "xl" : $wide ? "wide" : "normal"]};
+	max-height: ${({ $wide }) => ($wide === "xl" ? "90vh" : "none")};
+	display: ${({ $wide }) => ($wide === "xl" ? "flex" : "block")};
+	flex-direction: column;
 	box-shadow: 0 24px 64px rgb(0 0 0 / 0.6);
 	animation: ${slideUp} 150ms ease;
 	overflow: hidden;
+`;
+
+export const Form = styled.form`
+	display: flex;
+	flex-direction: column;
+	min-height: 0;
+	flex: 1;
 `;
 
 export const Header = styled.div`
@@ -54,6 +70,9 @@ export const Body = styled.div`
 	flex-direction: column;
 	gap: 18px;
 	padding: 0 24px 22px;
+	flex: 1;
+	min-height: 0;
+	overflow-y: auto;
 `;
 
 export const Actions = styled.div`

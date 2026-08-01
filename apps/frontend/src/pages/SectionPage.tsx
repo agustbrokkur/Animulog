@@ -1,7 +1,8 @@
 import styled from "styled-components";
-import { useCallback, useDeferredValue, useMemo, useState } from "react";
+import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { EntryRenderer, type ViewMode } from "../components/entry/EntryRenderer";
 import { useAnimu, useReorderSectionEntries } from "../hooks/useAnime";
+import { useSettings } from "../hooks/useSettings";
 import { GROUP_COLOR_VARS, GROUP_ICONS } from "../types/groupType";
 import { ViewModeSwitcher } from "../components/layout/actions/ViewModeSwitcher";
 import { SearchInput } from "../components/layout/actions/SearchInput";
@@ -119,12 +120,23 @@ const EmptyHint = styled.span`
 export const SectionView = () => {
 	const { sectionId } = useParams();
 	const { data: animu } = useAnimu();
+	const { data: settings } = useSettings();
 	const [viewMode, setViewMode] = useState<ViewMode>("grid");
 	const deferredViewMode = useDeferredValue(viewMode);
 	const [search, setSearch] = useState("");
 	const [filters, setFilters] = useState<EntryFilters>(EMPTY_FILTERS);
 	const [sort, setSort] = useState<EntrySort>(DEFAULT_SORT);
 	const debouncedSearch = useDebouncedValue(search, 200);
+
+	// Settings arrive async, after the initial render, so the defaults are applied once via this guard
+	// rather than as the useState initial value.
+	const appliedDefaults = useRef(false);
+	useEffect(() => {
+		if (!settings || appliedDefaults.current) return;
+		setSort(settings.defaultSort);
+		setViewMode(settings.defaultViewMode);
+		appliedDefaults.current = true;
+	}, [settings]);
 
 	const section = sectionId ? animu?.sections[sectionId] : undefined;
 	const sections = useMemo(() => (animu ? sortedSections(animu.sections) : []), [animu]);

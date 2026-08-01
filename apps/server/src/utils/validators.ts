@@ -2,6 +2,7 @@ import { MEDIA_TYPES, GROUP_TYPES, STATUSES } from "../models/animu.model.ts";
 import type { CreateEntry, UpdateEntry, EntrySource } from "../models/entry.model.ts";
 import type { CreateSection, UpdateSection } from "../models/section.model.ts";
 import type { UpdateFranchise } from "../models/franchise.model.ts";
+import type { Settings } from "../models/settings.model.ts";
 
 export function isValidId(value: string): boolean {
     return typeof value === "string" && value.length > 0;
@@ -168,6 +169,40 @@ export function validateUpdateEntry(entry: UpdateEntry): string | null {
     if (!isValidNumber(t.finishedCount)) return "Invalid timestamps.finishedCount";
     if (!isValidOptionalNumber(t.lastDropped)) return "Invalid timestamps.lastDropped";
 
+    return null;
+}
+
+export function validateSettings(settings: Settings): string | null {
+    if (!settings || typeof settings !== "object" || Array.isArray(settings)) {
+        return "Invalid settings";
+    }
+    if (!STATUSES.includes(settings.defaultEntryStatus)) {
+        return "Invalid defaultEntryStatus";
+    }
+    if (!settings.defaultSort || typeof settings.defaultSort !== "object") {
+        return "Invalid defaultSort";
+    }
+    if (!isValidString(settings.defaultSort.key)) {
+        return "Invalid defaultSort.key";
+    }
+    if (settings.defaultSort.direction !== "asc" && settings.defaultSort.direction !== "desc") {
+        return "Invalid defaultSort.direction";
+    }
+    if (!["detail", "list", "grid"].includes(settings.defaultViewMode)) {
+        return "Invalid defaultViewMode";
+    }
+    if (!settings.autoBackup || typeof settings.autoBackup !== "object") {
+        return "Invalid autoBackup";
+    }
+    if (typeof settings.autoBackup.enabled !== "boolean") {
+        return "Invalid autoBackup.enabled";
+    }
+    if (!Number.isFinite(settings.autoBackup.intervalHours) || settings.autoBackup.intervalHours <= 0) {
+        return "Invalid autoBackup.intervalHours";
+    }
+    if (!Number.isFinite(settings.anilistRequestsPerMinute) || settings.anilistRequestsPerMinute <= 0) {
+        return "Invalid anilistRequestsPerMinute";
+    }
     return null;
 }
 

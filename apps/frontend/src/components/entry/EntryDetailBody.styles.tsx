@@ -6,18 +6,26 @@ export const Top = styled.div<{ $large?: boolean }>`
 	align-items: flex-start;
 `;
 
-export const CoverWrap = styled.div<{ $large?: boolean }>`
-	width: ${({ $large }) => ($large ? "240px" : "120px")};
+export const CoverWrap = styled.div`
+	width: 240px;
 	flex-shrink: 0;
 `;
 
-export const Cover = styled.div`
+export const Cover = styled.div<{ $clickable?: boolean }>`
 	width: 100%;
 	aspect-ratio: 2 / 3;
 	border-radius: var(--radius);
 	overflow: hidden;
 	background: var(--bg-4);
 	border: 1px solid var(--border);
+	cursor: ${({ $clickable }) => ($clickable ? "zoom-in" : "default")};
+	transition: opacity 100ms;
+
+	${({ $clickable }) =>
+		$clickable &&
+		`&:hover {
+			opacity: 0.85;
+		}`}
 
 	img {
 		display: block;

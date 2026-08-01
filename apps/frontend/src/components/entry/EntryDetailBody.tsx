@@ -1,6 +1,8 @@
 // EntryDetailBody.tsx
-import { FolderOpen, Pencil, Plus, Star, Trash2, X } from "lucide-react";
+import { useState } from "react";
+import { FolderOpen, Pencil, Plus, RefreshCw, Star, Trash2, X } from "lucide-react";
 import { useAdjustEntryProgress, useAnimu, useMoveEntryToSection, useUpdateEntryMediaType, useUpdateEntryStatus } from "../../hooks/useAnime";
+import { useApplyEntrySource } from "../../hooks/useSources";
 import { useEntryEditor } from "../../hooks/useEntryEditor";
 import { resolveEntry, type Entry } from "../../types/entry";
 import type { Section } from "../../types/section";
@@ -11,6 +13,8 @@ import { EpisodeStepper } from "../layout/entry/EpisodeStepper";
 import { MediaTypeMenu } from "../layout/entry/MediaTypeMenu";
 import { StatusMenu } from "../layout/entry/StatusMenu";
 import { MoveMenu } from "../layout/entry/MoveMenu";
+import { SourceMatchPicker } from "../source/SourceMatchPicker";
+import { ImageLightbox } from "../ui/ImageLightbox";
 import {
 	ActionButton,
 	ActionsRow,
@@ -86,6 +90,9 @@ export const EntryDetailBody = ({ entry, sections, onDeleted, large }: EntryDeta
 	const { mutate: adjustProgress } = useAdjustEntryProgress();
 	const { mutate: updateMediaType } = useUpdateEntryMediaType();
 	const { mutate: updateStatus } = useUpdateEntryStatus();
+	const { mutate: applySource } = useApplyEntrySource();
+	const [pickingSource, setPickingSource] = useState(false);
+	const [lightboxOpen, setLightboxOpen] = useState(false);
 
 	const currentFranchiseTitle = animu ? (Object.values(animu.franchises).find((f) => f.entryIds.includes(entry.id))?.title ?? null) : null;
 
@@ -102,8 +109,10 @@ export const EntryDetailBody = ({ entry, sections, onDeleted, large }: EntryDeta
 	return (
 		<>
 			<Top $large={large}>
-				<CoverWrap $large={large}>
-					<Cover>{displayCover && <img src={displayCover} alt={displayTitle} />}</Cover>
+				<CoverWrap>
+					<Cover $clickable={!!displayCover} onClick={() => displayCover && setLightboxOpen(true)}>
+						{displayCover && <img src={displayCover} alt={displayTitle} />}
+					</Cover>
 				</CoverWrap>
 
 				<MetaCol $large={large}>
@@ -372,10 +381,26 @@ export const EntryDetailBody = ({ entry, sections, onDeleted, large }: EntryDeta
 				<MediaTypeMenu mediaType={entry.mediaType} onChange={(mediaType) => updateMediaType({ entry, mediaType })} />
 				<StatusMenu status={entry.status} onChange={(status) => updateStatus({ entry, status })} />
 				<MoveMenu sections={sections} entryId={entry.id} onMove={(sectionId) => moveEntry({ entryId: entry.id, targetSectionId: sectionId, sections })} />
+				<ActionButton $large={large} onClick={() => setPickingSource(true)}>
+					<RefreshCw size={13} /> Refetch Source
+				</ActionButton>
 				<ActionButton $danger $large={large} onClick={() => editor.handleDeleteClick(onDeleted)}>
 					<Trash2 size={13} /> Delete
 				</ActionButton>
 			</ActionsRow>
+
+			{pickingSource && (
+				<SourceMatchPicker
+					entryTitle={displayTitle}
+					onClose={() => setPickingSource(false)}
+					onSelect={(source) => {
+						applySource({ entryId: entry.id, source });
+						setPickingSource(false);
+					}}
+				/>
+			)}
+
+			{lightboxOpen && displayCover && <ImageLightbox src={displayCover} alt={displayTitle} onClose={() => setLightboxOpen(false)} />}
 
 			{editor.confirmUI}
 		</>
