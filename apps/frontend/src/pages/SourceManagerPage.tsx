@@ -498,6 +498,17 @@ export const SourceManagerView = () => {
 		return entries.filter((e) => !sectioned.has(e.id)).map((e) => e.id);
 	}, [sections, entries]);
 
+	// Full library, top-to-bottom in the same order the page displays it — used by the page-level
+	// Fetch All/Missing buttons so batches process in visual order rather than storage order.
+	const allOrderedEntryIds = useMemo(() => {
+		const ids: string[] = [];
+		for (const groupType of GROUP_TYPES) {
+			for (const section of sectionsByGroup.get(groupType) ?? []) ids.push(...sectionEntryIds(section));
+		}
+		ids.push(...unsectionedIds);
+		return ids;
+	}, [sectionsByGroup, unsectionedIds]);
+
 	const [query, setQuery] = useState("");
 	const [sourceFilter, setSourceFilter] = useState<SourceFilter>("all");
 	const [collapsedGroups, setCollapsedGroups] = useState<Partial<Record<GroupType, boolean>>>({});
@@ -607,10 +618,10 @@ export const SourceManagerView = () => {
 					)}
 				</HeaderLeft>
 				<HeaderActions>
-					<ActionButton onClick={() => handleStart("all")} disabled={isStarting || jobRunning}>
+					<ActionButton onClick={() => handleStart("all", allOrderedEntryIds)} disabled={isStarting || jobRunning}>
 						<RefreshCw size={13} /> Fetch All
 					</ActionButton>
-					<ActionButton onClick={() => handleStart("missing")} disabled={isStarting || jobRunning}>
+					<ActionButton onClick={() => handleStart("missing", allOrderedEntryIds)} disabled={isStarting || jobRunning}>
 						<RefreshCw size={13} /> Fetch Missing
 					</ActionButton>
 					{jobRunning && (

@@ -54,13 +54,17 @@ export function startBatchJob(mode: JobMode, entryIds: string[] | null): SourceJ
 		throw new Error("A source-fetch job is already running");
 	}
 
-	const scope = entryIds !== null ? new Set(entryIds) : null;
+	// Walk in the caller's order (its top-to-bottom on-screen order), not object insertion order —
+	// falling back to insertion order only if no explicit scope/order was given at all.
 	const data = readAnimuData();
-	const targets = Object.values(data.entries).filter((entry) => {
-		if (scope !== null && !scope.has(entry.id)) return false;
-		if (mode === "missing" && !needsSourceFetch(entry)) return false;
-		return true;
-	});
+	const orderedIds = entryIds ?? Object.keys(data.entries);
+	const targets: Entry[] = [];
+	for (const id of orderedIds) {
+		const entry = data.entries[id as keyof typeof data.entries];
+		if (!entry) continue;
+		if (mode === "missing" && !needsSourceFetch(entry)) continue;
+		targets.push(entry);
+	}
 
 	const job: SourceJob = {
 		id: crypto.randomUUID(),
