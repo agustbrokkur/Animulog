@@ -1,7 +1,7 @@
 import { type Request, type Response, Router } from "express";
-import type { CreateSection, UpdateSection, Section, SectionEntries } from "../models/section.model.ts";
-import { isValidUUID, validateCreateSection, validateSectionEntries, validateUpdateSection } from "../utils/validators.ts";
-import { generateUniqueId } from "../utils/generators.ts";
+import type { CreateSection, ManualSection, Section, SectionEntries, SmartSection } from "../models/section.model.ts";
+import { isValidId, validateCreateSection, validateSectionEntries, validateUpdateSection } from "../utils/validators.ts";
+import { asSectionId, newSectionId } from "../models/ids.ts";
 import { handleError } from "../utils/errorUtils.ts";
 import { readAnimuData, writeAnimuData } from "../utils/fileUtils.ts";
 
@@ -12,7 +12,7 @@ const sectionRouter = Router();
 sectionRouter.get("/", (_: Request, res: Response) => {
     try {
         const data = readAnimuData();
-        const sections = data.sections;
+        const sections = Object.values(data.sections);
 
         res.status(200).json(sections);
     } catch (error: unknown) {
@@ -27,32 +27,47 @@ sectionRouter.post("/", (req: Request<any, any, CreateSection>, res: Response) =
         const createdSection = req.body;
         const validated = validateCreateSection(createdSection);
         if (validated) {
-            return res.status(400).json({ 
-                message: validated 
+            return res.status(400).json({
+                message: validated
             });
         }
 
         const data = readAnimuData();
-        if (data.sections.some(section => section.label === createdSection.label)) {
-            return res.status(400).json({ 
-                message: `Section "${createdSection.label} already exist` 
+        if (Object.values(data.sections).some(section => section.label === createdSection.label)) {
+            return res.status(400).json({
+                message: `Section "${createdSection.label}" already exists`
             });
         }
 
-        const sectionIds = data.sections.map(section => section.id);
-        const newSection: Section = {
-            id: generateUniqueId(sectionIds),
-            label: createdSection.label,
-            group: createdSection.group,
-            system: createdSection.system,
-            entryIds: []
-        }
+        const newId = newSectionId();
+        const order = Object.keys(data.sections).length;
 
-        data.sections.push(newSection);
+        const newSection: Section = createdSection.kind === "smart"
+            ? {
+                id: newId,
+                label: createdSection.label,
+                group: createdSection.group,
+                system: createdSection.system,
+                order,
+                kind: "smart",
+                filter: createdSection.filter,
+                sort: createdSection.sort,
+            } satisfies SmartSection
+            : {
+                id: newId,
+                label: createdSection.label,
+                group: createdSection.group,
+                system: createdSection.system,
+                order,
+                kind: "manual",
+                entryIds: [],
+            } satisfies ManualSection;
+
+        data.sections[newId] = newSection;
         writeAnimuData(data);
 
         res.status(201).json({
-            message: `Section ${newSection} created`,
+            message: `Section ${newSection.label} created`,
             ok: true,
         });
     } catch (error: unknown) {
@@ -65,18 +80,18 @@ sectionRouter.post("/", (req: Request<any, any, CreateSection>, res: Response) =
 sectionRouter.get("/:id", (req: Request<{ id: string }>, res: Response) => {
     try {
         const { id } = req.params;
-        if (!isValidUUID(id)) {
-            return res.status(400).json({ 
-                message: "Invalid section id" 
+        if (!isValidId(id)) {
+            return res.status(400).json({
+                message: "Invalid section id"
             });
         }
 
         const data = readAnimuData();
-        const section = data.sections.find(s => s.id === id); //Object.keys(data) ?? [];
+        const section = data.sections[asSectionId(id)];
 
         if (!section) {
-            return res.status(404).json({ 
-                message: `Section id "${id}" not found` 
+            return res.status(404).json({
+                message: `Section id "${id}" not found`
             });
         }
 
@@ -88,49 +103,48 @@ sectionRouter.get("/:id", (req: Request<{ id: string }>, res: Response) => {
 
 // PUT /api/animu/sections/:id
 // Update section label
-sectionRouter.put("/sections/:id", (req: Request<{ id: string }, any, UpdateSection>, res: Response) => {
+sectionRouter.put("/sections/:id", (req: Request<{ id: string }, any, { label: string; group: Section["group"] }>, res: Response) => {
     try {
         const { id } = req.params;
-        if (!isValidUUID(id)) {
-            return res.status(400).json({ 
-                message: "Invalid section id" 
+        if (!isValidId(id)) {
+            return res.status(400).json({
+                message: "Invalid section id"
             });
         }
 
         const updatedSection = req.body;
         const validated = validateUpdateSection(updatedSection);
         if (validated) {
-            return res.status(400).json({ 
-                message: validated 
+            return res.status(400).json({
+                message: validated
             });
         }
 
         const data = readAnimuData();
-        const existingSection = data.sections.find(s => s.id === id);
+        const existingSection = data.sections[asSectionId(id)];
 
         if (!existingSection) {
-            return res.status(404).json({ 
-                message: `Section id "${id}" not found` 
+            return res.status(404).json({
+                message: `Section id "${id}" not found`
             });
         }
 
-        if (data.sections.some(s => s.label === updatedSection.label)) {
-            return res.status(400).json({ 
-                message: `Section "${updatedSection.label}" already exist` 
+        if (Object.values(data.sections).some(s => s.id !== id && s.label === updatedSection.label)) {
+            return res.status(400).json({
+                message: `Section "${updatedSection.label}" already exists`
             });
         }
 
         const oldSectionName = existingSection.label;
         const newSectionName = updatedSection.label;
-        const newGroup = updatedSection.group;
-        
+
         existingSection.label = newSectionName;
-        existingSection.group = newGroup;
+        existingSection.group = updatedSection.group;
         writeAnimuData(data);
 
-        const returnMessage = oldSectionName === newSectionName 
-            ? `Updated section ${newSectionName}` 
-            : `Updated section ${oldSectionName} (previously "${newSectionName})"`;
+        const returnMessage = oldSectionName === newSectionName
+            ? `Updated section ${newSectionName}`
+            : `Updated section ${oldSectionName} (previously "${newSectionName}")`;
 
         res.status(200).json({
             message: returnMessage,
@@ -146,22 +160,22 @@ sectionRouter.put("/sections/:id", (req: Request<{ id: string }, any, UpdateSect
 sectionRouter.delete("/sections/:id", (req: Request<{ id: string }>, res: Response) => {
     try {
         const { id } = req.params;
-        if (!isValidUUID(id)) {
-            return res.status(400).json({ 
-                message: "Invalid section id" 
+        if (!isValidId(id)) {
+            return res.status(400).json({
+                message: "Invalid section id"
             });
         }
 
         const data = readAnimuData();
-        const existingSection = data.sections.find(s => s.id === id)
+        const existingSection = data.sections[asSectionId(id)];
 
         if (!existingSection) {
-            return res.status(404).json({ 
-                message: `Section id "${id}" not found` 
+            return res.status(404).json({
+                message: `Section id "${id}" not found`
             });
         }
 
-        data.sections = data.sections.filter(s => s.id !== id);
+        delete data.sections[asSectionId(id)];
         writeAnimuData(data);
 
         res.status(200).json({
@@ -178,30 +192,35 @@ sectionRouter.delete("/sections/:id", (req: Request<{ id: string }>, res: Respon
 sectionRouter.put("/sections/:id/entries", (req: Request<{ id: string }, any, SectionEntries>, res: Response) => {
     try {
         const { id } = req.params;
-        if (!isValidUUID(id)) {
-            return res.status(400).json({ 
-                message: "Invalid section id" 
+        if (!isValidId(id)) {
+            return res.status(400).json({
+                message: "Invalid section id"
             });
         }
 
         const sectionEntries = req.body;
         const validated = validateSectionEntries(sectionEntries.entryIds);
         if (validated) {
-            return res.status(400).json({ 
-                message: validated 
+            return res.status(400).json({
+                message: validated
             });
         }
 
         const data = readAnimuData();
-        const existingSection = data.sections.find(s => s.id === id);
+        const existingSection = data.sections[asSectionId(id)];
 
         if (!existingSection) {
-            return res.status(404).json({ 
-                message: `Section id "${id}" not found` 
+            return res.status(404).json({
+                message: `Section id "${id}" not found`
+            });
+        }
+        if (existingSection.kind !== "manual") {
+            return res.status(400).json({
+                message: `Section "${existingSection.label}" is a smart section; its membership is derived from its filter, not editable directly`
             });
         }
 
-        existingSection.entryIds = [... new Set([...sectionEntries.entryIds])];
+        existingSection.entryIds = [...new Set(sectionEntries.entryIds)];
         writeAnimuData(data);
 
         res.status(200).json(existingSection.entryIds);

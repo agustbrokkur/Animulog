@@ -1,14 +1,13 @@
-import { validate as uuidValidate } from "uuid";
-import { MEDIA_TYPES, GROUP_TYPES } from "../models/animu.model.ts";
-import type { CreateEntry, UpdateEntry, Entry, EntrySource } from "../models/entry.model.ts";
-import type { UpdateSection, CreateSection, Section } from "../models/section.model.ts";
+import { MEDIA_TYPES, GROUP_TYPES, STATUSES } from "../models/animu.model.ts";
+import type { CreateEntry, UpdateEntry, EntrySource } from "../models/entry.model.ts";
+import type { CreateSection, UpdateSection } from "../models/section.model.ts";
 
-export function isValidUUID(value: string): boolean {
-    return uuidValidate(value);
+export function isValidId(value: string): boolean {
+    return typeof value === "string" && value.length > 0;
 }
 
-export function isValidUUIDArray(value: string[]): boolean {
-    return Array.isArray(value) && value.every(item => typeof item === "string" && isValidUUID(item));
+export function isValidIdArray(value: string[]): boolean {
+    return Array.isArray(value) && value.every(item => typeof item === "string" && isValidId(item));
 }
 
 export function isValidString(value: string): boolean {
@@ -43,7 +42,7 @@ export function isValidOptionalNumber(value: number | null): boolean {
 }
 
 export function validateSectionEntries(sectionEntryList: string[]): string | null {
-    if (!isValidUUIDArray(sectionEntryList)) {
+    if (!isValidIdArray(sectionEntryList)) {
         return "Invalid section entry list";
     }
     return null;
@@ -54,7 +53,7 @@ export function validateUpdateSection(section: UpdateSection): string | null {
         return "Invalid section";
     }
     if (!isValidString(section.label)) {
-        return "Invalid section label"
+        return "Invalid section label";
     }
     if (!GROUP_TYPES.includes(section.group)) {
         return "Invalid group type";
@@ -64,37 +63,40 @@ export function validateUpdateSection(section: UpdateSection): string | null {
 
 export function validateCreateSection(section: CreateSection): string | null {
     const validationMessage = validateUpdateSection(section);
-
     if (validationMessage !== null) {
         return validationMessage;
     }
-    if (typeof section.system !== 'boolean') {
-        return "Invalid section label"
+    if (typeof section.system !== "boolean") {
+        return "Invalid system flag";
     }
-    return null;
-}
 
-export function validateSection(section: Section): string | null {
-    const validationMessage = validateCreateSection(section);
-
-    if (validationMessage !== null) {
-        return validationMessage;
+    if (section.kind === "manual") {
+        return null;
     }
-    if (!isValidUUIDArray(section.entryIds)) {
-        return "Invalid array of Entry Ids";
+    if (section.kind === "smart") {
+        if (!section.filter || typeof section.filter !== "object" || Array.isArray(section.filter)) {
+            return "Invalid filter";
+        }
+        if (!section.sort || typeof section.sort !== "object") {
+            return "Invalid sort";
+        }
+        if (section.sort.direction !== "asc" && section.sort.direction !== "desc") {
+            return "Invalid sort direction";
+        }
+        return null;
     }
-    return null;
+    return "Invalid section kind";
 }
 
 export function validateCreateEntry(entry: CreateEntry): string | null {
     if (!entry || typeof entry !== "object" || Array.isArray(entry)) {
         return "Invalid entry";
     }
-    if (!isValidString(entry.title)) {
-        return "Invalid title";
-    }
     if (!MEDIA_TYPES.includes(entry.mediaType)) {
         return "Invalid media type";
+    }
+    if (entry.status !== undefined && !STATUSES.includes(entry.status)) {
+        return "Invalid status";
     }
     if (typeof entry.favorite !== "boolean") {
         return "Invalid favorite";
@@ -102,49 +104,56 @@ export function validateCreateEntry(entry: CreateEntry): string | null {
     if (entry.note !== null && !isValidString(entry.note)) {
         return "Invalid note";
     }
-    
-    if (!isValidOptionalNumber(entry.rating)) {
-        return "Invalid rating";
+    if (!isValidOptionalNumber(entry.score)) {
+        return "Invalid score";
     }
-    if (typeof entry.rating === "number" && entry.rating >= 0 && entry.rating <= 10) {
-        return "Value rating must must be a value from 0 to 10";
+    if (!isValidOptionalNumber(entry.progress)) {
+        return "Invalid progress";
     }
-    if (!isValidUrl(entry.coverUrl)) {
-        return "Invalid coverUrl";
+    if (entry.titleOverride !== null && !isValidString(entry.titleOverride)) {
+        return "Invalid titleOverride";
     }
-    if (!isValidUUIDArray(entry.relatedEntryIds)) {
-        return "Invalid array of Entry Ids";
-    }
-    if (!isValidOptionalNumber(entry.currentEpisode)) {
-        return "Invalid current episode";
-    }
-    
-    if (!isValidOptionalNumber(entry.startedAt)) {
-        return "Invalid startedAt";
-    }
-    if (!isValidOptionalNumber(entry.finishedAt)) {
-        return "Invalid finishedAt";
-    }
-    if (!isValidOptionalNumber(entry.droppedAt)) {
-        return "Invalid droppedAt";
+    if (entry.coverOverride !== null && !isValidUrl(entry.coverOverride)) {
+        return "Invalid coverOverride";
     }
     return null;
 }
 
 export function validateUpdateEntry(entry: UpdateEntry): string | null {
     const validationMessage = validateCreateEntry(entry);
-
     if (validationMessage !== null) {
         return validationMessage;
     }
-    if (!isValidNumber(entry.addedAt)) {
-        return "Invalid addedAt";
+    if (!STATUSES.includes(entry.status)) {
+        return "Invalid status";
     }
+
+    const t = entry.timestamps;
+    if (!t || typeof t !== "object") {
+        return "Invalid timestamps";
+    }
+    if (!isValidNumber(t.added)) return "Invalid timestamps.added";
+    if (!isValidNumber(t.updated)) return "Invalid timestamps.updated";
+    if (!isValidOptionalNumber(t.firstStarted)) return "Invalid timestamps.firstStarted";
+    if (!isValidOptionalNumber(t.lastStarted)) return "Invalid timestamps.lastStarted";
+    if (!isValidOptionalNumber(t.firstFinished)) return "Invalid timestamps.firstFinished";
+    if (!isValidOptionalNumber(t.lastFinished)) return "Invalid timestamps.lastFinished";
+    if (!isValidNumber(t.finishedCount)) return "Invalid timestamps.finishedCount";
+    if (!isValidOptionalNumber(t.lastDropped)) return "Invalid timestamps.lastDropped";
 
     return null;
 }
 
 export function validateEntrySource(entrySource: EntrySource): string | null {
+    if (entrySource.provider !== "mal" && entrySource.provider !== "anilist" && entrySource.provider !== "legacy") {
+        return "Invalid provider";
+    }
+    if (!isValidString(entrySource.externalId)) {
+        return "Invalid externalId";
+    }
+    if (!isValidNumber(entrySource.fetchedAt)) {
+        return "Invalid fetchedAt";
+    }
     if (!isValidString(entrySource.englishTitle)) {
         return "Invalid English Title";
     }
@@ -154,42 +163,26 @@ export function validateEntrySource(entrySource: EntrySource): string | null {
     if (!isValidString(entrySource.synopsis)) {
         return "Invalid Synopsis";
     }
-    
     if (!isValidStringArray(entrySource.studios)) {
         return "Invalid studios list";
     }
     if (!isValidStringArray(entrySource.genres)) {
         return "Invalid genres list";
     }
-    
     if (!isValidUrl(entrySource.coverUrl)) {
         return "Invalid coverUrl";
     }
     if (!isValidOptionalNumber(entrySource.totalEpisodes)) {
-        return "Invalid current episode";
+        return "Invalid totalEpisodes";
     }
-    if (!isValidOptionalNumber(entrySource.rating)) {
-        return "Invalid rating";
+    if (!isValidOptionalNumber(entrySource.communityRating)) {
+        return "Invalid communityRating";
     }
-
     if (!isValidOptionalNumber(entrySource.airedFrom)) {
-        return "Invalid startedAt";
+        return "Invalid airedFrom";
     }
     if (!isValidOptionalNumber(entrySource.airedTo)) {
-        return "Invalid finishedAt";
-    }
-
-    return null;
-}
-
-export function validateEntry(entry: Entry): string | null {
-    const validationMessage = validateUpdateEntry(entry);
-
-    if (validationMessage !== null) {
-        return validationMessage;
-    }
-    if (!uuidValidate(entry.id)) {
-        return "Invalid id";
+        return "Invalid airedTo";
     }
 
     return null;

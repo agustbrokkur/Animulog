@@ -21,7 +21,6 @@ animuRouter.get("/", (_: Request, res: Response) => {
     }
 });
 
-
 animuRouter.get("/backup", (_: Request, res: Response) => {
     try {
         const backupPath = createBackup();

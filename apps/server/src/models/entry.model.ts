@@ -1,76 +1,71 @@
-import type { MediaType } from "./animu.model";
+import type { EntryId } from "./ids.ts";
+import type { MediaType, Status } from "./animu.model.ts";
 
-export const EMPTY_SOURCE: EntrySource = {
-  englishTitle: '',
-  japaneseTitle: '',
-  synopsis: '',
-  studios: [],
-  genres: [],
-  coverUrl: null,
-  totalEpisodes: null,
-  rating: null,
-  airedFrom: null,
-  airedTo: null,
-  fetchedAt: null,
-};
-
+/** A cache of provider data, not user input. Deleting every `source` on every entry must lose nothing the user typed. */
 export type EntrySource = {
+    provider: "mal" | "anilist" | "legacy"; // "legacy" = migrated, no real provider id
+    externalId: string;
+    fetchedAt: number;
+
     englishTitle: string;
     japaneseTitle: string;
     synopsis: string;
-
     studios: string[];
     genres: string[];
-
     coverUrl: string | null;
     totalEpisodes: number | null;
-    rating: number | null;
-
+    communityRating: number | null;
     airedFrom: number | null;
     airedTo: number | null;
-    fetchedAt: number | null;
-}
+};
+
+export type EntryTimestamps = {
+    added: number;
+    updated: number;
+
+    firstStarted: number | null;
+    lastStarted: number | null;
+
+    firstFinished: number | null;
+    lastFinished: number | null;
+    /** 0 when never finished. Rewatch count is `finishedCount - 1`. */
+    finishedCount: number;
+
+    /** Most recent drop. Deliberately not counted — a drop is terminal. */
+    lastDropped: number | null;
+};
 
 export type Entry = {
-  id: string;
-  title: string;
-  mediaType: MediaType;
-  favorite: boolean;
-  note: string | null;
-
-  rating: number | null;
-  coverUrl: string | null;
-  relatedEntryIds: string[];
-  currentEpisode: number | null;
-
-  addedAt: number;
-  startedAt: number | null;
-  finishedAt: number | null;
-  droppedAt: number | null;
-
-  source: EntrySource;
-};
-
-export type EntryOld = {
-    id: string;
-    title: string;
+    id: EntryId;
     mediaType: MediaType;
+    status: Status;
     favorite: boolean;
-    studios: string[];
-    genres: string[];
-    coverUrl: string | null;
-    currentEpisode: number | null;
-    totalEpisodes: number | null;
     note: string | null;
-    addedAt: number;
-    releasedAt: number | null;
-    endedAt: number | null;
-    startedAt: number | null;
-    finishedAt: number | null;
-    droppedAt: number | null;
-    rating: number | null;
+    score: number | null; // personal rating
+    progress: number | null;
+
+    titleOverride: string | null; // null = defer to source
+    coverOverride: string | null;
+
+    source: EntrySource | null; // null for custom entries (VNs, western, unmatched)
+
+    timestamps: EntryTimestamps;
 };
 
-export type CreateEntry = Omit<Entry, "id" | "addedAt" | "source">;
+export type ResolvedEntry = Entry & { displayTitle: string; displayCover: string | null };
 
+export function resolve(entry: Entry): ResolvedEntry {
+    return {
+        ...entry,
+        displayTitle: entry.titleOverride ?? entry.source?.englishTitle ?? "Untitled",
+        displayCover: entry.coverOverride ?? entry.source?.coverUrl ?? null,
+    };
+}
+
+// source is never client-settable — a new entry always starts with source: null (the cache is populated later).
+// status defaults to "unsorted" server-side when omitted.
+export type CreateEntry = Omit<Entry, "id" | "timestamps" | "source" | "status"> & { status?: Status };
+
+// timestamps stay fully editable — status and timestamps are independent and neither is derived
+// from the other here or anywhere else.
 export type UpdateEntry = Omit<Entry, "id" | "source">;

@@ -1,19 +1,18 @@
 import { type Request, type Response, Router } from "express";
-import type { Animu } from "../models/animu.model.ts";
-import { EMPTY_SOURCE, type CreateEntry, type Entry, type UpdateEntry } from "../models/entry.model.ts";
-import { isValidUUID, validateCreateEntry, validateUpdateEntry, } from "../utils/validators.ts";
-import { generateUniqueId } from "../utils/generators.ts";
+import type { CreateEntry, Entry, UpdateEntry } from "../models/entry.model.ts";
+import { isValidId, validateCreateEntry, validateUpdateEntry } from "../utils/validators.ts";
+import { asEntryId, newEntryId } from "../models/ids.ts";
 import { handleError } from "../utils/errorUtils.ts";
 import { readAnimuData, writeAnimuData } from "../utils/fileUtils.ts";
 
 const entryRouter = Router();
 
-// GET /api/animu/entries          
+// GET /api/animu/entries
 // List all entries
 entryRouter.get("/", (_: Request, res: Response) => {
     try {
         const data = readAnimuData();
-        const entries = data.entries;
+        const entries = Object.values(data.entries);
 
         res.status(200).json(entries);
     } catch (error: unknown) {
@@ -21,35 +20,46 @@ entryRouter.get("/", (_: Request, res: Response) => {
     }
 });
 
-// POST /api/animu/entries          
+// POST /api/animu/entries
 // Create entry
 entryRouter.post("/", (req: Request<any, any, CreateEntry>, res: Response) => {
     try {
         const createdEntry = req.body;
         const validated = validateCreateEntry(createdEntry);
         if (validated) {
-            return res.status(400).json({ 
-                message: validated 
+            return res.status(400).json({
+                message: validated
             });
         }
 
         const data = readAnimuData();
-        const setOfIds = Object.values(data).flatMap(entries => entries.map(x => x.id));
-        const newId = generateUniqueId(setOfIds);
-        const newAddedAt = Date.now();
+        const newId = newEntryId();
+        const now = Date.now();
         const newEntry: Entry = {
-            ...createdEntry,
             id: newId,
-            addedAt: newAddedAt,
-            source: EMPTY_SOURCE
+            mediaType: createdEntry.mediaType,
+            status: createdEntry.status ?? "unsorted",
+            favorite: createdEntry.favorite,
+            note: createdEntry.note,
+            score: createdEntry.score,
+            progress: createdEntry.progress,
+            titleOverride: createdEntry.titleOverride,
+            coverOverride: createdEntry.coverOverride,
+            source: null,
+            timestamps: {
+                added: now,
+                updated: now,
+                firstStarted: null,
+                lastStarted: null,
+                firstFinished: null,
+                lastFinished: null,
+                finishedCount: 0,
+                lastDropped: null,
+            },
         };
 
-        const newData: Animu = {
-            sections: data.sections,
-            entries: [...data.entries, newEntry]
-        };
-
-        writeAnimuData(newData);
+        data.entries[newId] = newEntry;
+        writeAnimuData(data);
 
         res.status(201).json({
             message: `Entry with id ${newEntry.id} created`,
@@ -60,23 +70,23 @@ entryRouter.post("/", (req: Request<any, any, CreateEntry>, res: Response) => {
     }
 });
 
-// GET /api/animu/entries/:id      
+// GET /api/animu/entries/:id
 // get single entry
 entryRouter.get("/:id", (req: Request<{ id: string }>, res: Response) => {
     try {
         const { id } = req.params;
-        if (!isValidUUID(id)) {
-            return res.status(400).json({ 
-                message: "Invalid entry id" 
+        if (!isValidId(id)) {
+            return res.status(400).json({
+                message: "Invalid entry id"
             });
         }
-        
+
         const data = readAnimuData();
-        const entry = data.entries.find(entry => entry.id === id);
+        const entry = data.entries[asEntryId(id)];
 
         if (!entry) {
-            return res.status(404).json({ 
-                message: `Entry id "${id}" not found` 
+            return res.status(404).json({
+                message: `Entry id "${id}" not found`
             });
         }
 
@@ -86,38 +96,35 @@ entryRouter.get("/:id", (req: Request<{ id: string }>, res: Response) => {
     }
 });
 
-// PUT /api/animu/entries/:id      
+// PUT /api/animu/entries/:id
 // Update entry
 entryRouter.put("/:id", (req: Request<{ id: string }, any, UpdateEntry>, res: Response) => {
     try {
         const { id } = req.params;
-        if (!isValidUUID(id)) {
-            return res.status(400).json({ 
-                message: "Invalid entry id" 
+        if (!isValidId(id)) {
+            return res.status(400).json({
+                message: "Invalid entry id"
             });
         }
-        
+
         const updatedEntry = req.body;
         const validated = validateUpdateEntry(updatedEntry);
         if (validated) {
-            return res.status(400).json({ 
-                message: validated 
+            return res.status(400).json({
+                message: validated
             });
         }
 
         const data = readAnimuData();
-        const existingEntry = data.entries.find(e => e.id === id);
+        const existingEntry = data.entries[asEntryId(id)];
 
         if (!existingEntry) {
-            return res.status(404).json({ 
-                message: `Entry id "${id}" not found` 
+            return res.status(404).json({
+                message: `Entry id "${id}" not found`
             });
         }
 
-        data.entries = data.entries.map(entry => 
-            entry.id == id 
-            ? { id: id, ...updatedEntry, source: existingEntry.source } 
-            : entry);
+        data.entries[asEntryId(id)] = { ...updatedEntry, id: existingEntry.id, source: existingEntry.source };
 
         writeAnimuData(data);
         res.status(201).json({ ok: true });
@@ -126,27 +133,27 @@ entryRouter.put("/:id", (req: Request<{ id: string }, any, UpdateEntry>, res: Re
     }
 });
 
-// DELETE /api/animu/entries/:id      
+// DELETE /api/animu/entries/:id
 // Delete entry
-entryRouter.delete("/:id", (req: Request<{ id: string}>, res: Response) => {
+entryRouter.delete("/:id", (req: Request<{ id: string }>, res: Response) => {
     try {
         const { id } = req.params;
-        if (!isValidUUID(id)) {
-            return res.status(400).json({ 
-                message: "Invalid entry id" 
+        if (!isValidId(id)) {
+            return res.status(400).json({
+                message: "Invalid entry id"
             });
         }
 
         const data = readAnimuData();
-        const existingEntry = data.entries.find(e => e.id === id);
+        const existingEntry = data.entries[asEntryId(id)];
 
         if (!existingEntry) {
-            return res.status(404).json({ 
-                message: `Entry id "${id}" not found` 
+            return res.status(404).json({
+                message: `Entry id "${id}" not found`
             });
         }
 
-        data.entries = data.entries.filter(e => e.id !== id);
+        delete data.entries[asEntryId(id)];
         writeAnimuData(data);
 
         res.status(201).json({ ok: true });
