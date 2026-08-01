@@ -3,6 +3,7 @@ import { Link } from "react-router";
 import { useMemo } from "react";
 import { GROUP_TYPES, GROUP_ICONS, GROUP_TYPE_MAPPINGS, GROUP_COLOR_VARS, type GroupType } from "../../../types/groupType";
 import { useAnimu } from "../../../hooks/useAnime";
+import { sectionEntryIds, sortedSections } from "../../../types/section";
 import { CircleSmallIcon } from "lucide-react";
 
 interface Grouping {
@@ -101,10 +102,10 @@ export const SidebarBody = () => {
 	const grouping = useMemo<Grouping[]>(() => {
 		if (!animu) return [];
 
-		return animu.sections.map((section) => ({
+		return sortedSections(animu.sections).map((section) => ({
 			name: section.label,
 			type: section.group,
-			count: section.entryIds.length,
+			count: sectionEntryIds(section).length,
 			path: `/sections/${section.id}`,
 		}));
 	}, [animu, isLoading]);

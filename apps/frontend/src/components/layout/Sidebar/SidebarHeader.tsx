@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import styled from "styled-components";
 import { useAnimu } from "../../../hooks/useAnime";
 import { type GroupType, GROUP_TYPES, GROUP_TYPE_MAPPINGS, GROUP_COLOR_VARS } from "../../../types/groupType";
+import { sectionEntryIds } from "../../../types/section";
 import { Link } from "react-router";
 
 interface GroupCount {
@@ -70,7 +71,9 @@ export const SidebarHeader = () => {
 
 		return GROUP_TYPES.map((group) => ({
 			name: group,
-			count: animu.sections.filter((section) => section.group === group).reduce((total, section) => total + section.entryIds.length, 0),
+			count: Object.values(animu.sections)
+				.filter((section) => section.group === group)
+				.reduce((total, section) => total + sectionEntryIds(section).length, 0),
 		}));
 	}, [animu, isLoading]);
 

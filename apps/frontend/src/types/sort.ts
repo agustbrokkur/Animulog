@@ -1,6 +1,6 @@
 // types/sort.ts
 
-export type SortKey = "custom" | "title" | "myRating" | "communityRating" | "episodesWatched" | "totalEpisodes" | "addedAt" | "startedAt" | "finishedAt" | "aired";
+export type SortKey = "custom" | "title" | "score" | "communityRating" | "episodesWatched" | "totalEpisodes" | "addedAt" | "startedAt" | "finishedAt" | "aired";
 
 export type SortDirection = "asc" | "desc";
 
@@ -14,7 +14,7 @@ export const DEFAULT_SORT: EntrySort = { key: "custom", direction: "asc" };
 export const SORT_OPTIONS: { key: SortKey; label: string }[] = [
 	{ key: "custom", label: "Custom order" },
 	{ key: "title", label: "Title" },
-	{ key: "myRating", label: "Your Rating" },
+	{ key: "score", label: "Your Rating" },
 	{ key: "communityRating", label: "Community Rating" },
 	{ key: "episodesWatched", label: "Episodes Watched" },
 	{ key: "totalEpisodes", label: "Total Episodes" },
@@ -28,7 +28,7 @@ export const SORT_OPTIONS: { key: SortKey; label: string }[] = [
 export const SORT_DEFAULT_DIRECTION: Record<SortKey, SortDirection> = {
 	custom: "asc",
 	title: "asc",
-	myRating: "desc",
+	score: "desc",
 	communityRating: "desc",
 	episodesWatched: "desc",
 	totalEpisodes: "desc",

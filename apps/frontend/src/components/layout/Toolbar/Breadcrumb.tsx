@@ -2,6 +2,8 @@ import { Link, useParams } from "react-router";
 import styled from "styled-components";
 import { ChevronRight } from "lucide-react";
 import { useAnimu } from "../../../hooks/useAnime";
+import { resolveEntry } from "../../../types/entry";
+import { sectionEntryIds } from "../../../types/section";
 
 const Nav = styled.nav`
 	display: flex;
@@ -46,15 +48,19 @@ export const Breadcrumb = () => {
 	const { animeId, sectionId } = useParams();
 	const { data: animu } = useAnimu();
 
-	const entryItem = animeId ? animu?.entries.find((entry) => entry.id === animeId) : undefined;
+	const entryItem = animeId ? animu?.entries[animeId] : undefined;
 
-	const sectionItem = sectionId ? animu?.sections.find((section) => section.id === sectionId) : animeId ? animu?.sections.find((x) => x.entryIds.includes(animeId)) : undefined;
+	const sectionItem = sectionId
+		? animu?.sections[sectionId]
+		: animeId
+			? Object.values(animu?.sections ?? {}).find((s) => sectionEntryIds(s).includes(animeId))
+			: undefined;
 
 	const crumbs = [{ label: "Overview", path: "/" }];
 
 	if (entryItem) {
 		crumbs.push({ label: sectionItem?.label ?? "N/A", path: `/sections/${sectionItem?.id ?? "N/A"}` });
-		crumbs.push({ label: entryItem.title, path: `/anime/${entryItem.id}` });
+		crumbs.push({ label: resolveEntry(entryItem).displayTitle, path: `/anime/${entryItem.id}` });
 	} else if (sectionItem) {
 		crumbs.push({ label: sectionItem.label, path: `/sections/${sectionItem.id}` });
 	}

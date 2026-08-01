@@ -2,6 +2,7 @@ import { useState } from "react";
 import styled from "styled-components";
 import { ArrowLeftRight } from "lucide-react";
 import type { Section } from "../../../types/section";
+import { isManualSection } from "../../../types/section";
 
 const Wrap = styled.div`
 	position: relative;
@@ -51,6 +52,8 @@ const Option = styled.button`
 
 export const MoveMenu = ({ sections, onMove }: { sections: Section[]; onMove?: (id: string) => void }) => {
 	const [open, setOpen] = useState(false);
+	// Smart sections derive membership from a filter, not direct assignment — only manual sections are movable targets.
+	const manualSections = sections.filter(isManualSection);
 	return (
 		<Wrap>
 			<Btn onClick={() => setOpen((v) => !v)}>
@@ -58,7 +61,7 @@ export const MoveMenu = ({ sections, onMove }: { sections: Section[]; onMove?: (
 			</Btn>
 			{open && (
 				<Dropdown>
-					{sections.map((s) => (
+					{manualSections.map((s) => (
 						<Option
 							key={s.id}
 							onClick={() => {

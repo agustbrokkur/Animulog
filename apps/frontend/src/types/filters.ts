@@ -1,6 +1,6 @@
 // types/filters.ts
 import type { MediaType } from "./mediaType";
-import type { EntryStatus } from "./status";
+import type { Status } from "./status";
 
 export interface NumberRange {
 	min: number | null;
@@ -14,18 +14,18 @@ export interface DateRange {
 
 export interface EntryFilters {
 	mediaTypes: MediaType[];
-	statuses: EntryStatus[];
+	statuses: Status[];
 	genres: string[];
 	studios: string[];
 	favoriteOnly: boolean;
 
-	episodeRange: NumberRange;
-	ratingRange: NumberRange; // your own rating (entry.rating)
+	episodeRange: NumberRange; // entry.source.totalEpisodes
+	scoreRange: NumberRange; // your own score (entry.score)
 
 	airedRange: DateRange; // entry.source.airedFrom
-	startedRange: DateRange; // entry.startedAt
-	finishedRange: DateRange; // entry.finishedAt
-	droppedRange: DateRange; // entry.droppedAt
+	startedRange: DateRange; // entry.timestamps.lastStarted
+	finishedRange: DateRange; // entry.timestamps.lastFinished
+	droppedRange: DateRange; // entry.timestamps.lastDropped
 }
 
 export const EMPTY_RANGE: NumberRange = { min: null, max: null };
@@ -38,7 +38,7 @@ export const EMPTY_FILTERS: EntryFilters = {
 	studios: [],
 	favoriteOnly: false,
 	episodeRange: EMPTY_RANGE,
-	ratingRange: EMPTY_RANGE,
+	scoreRange: EMPTY_RANGE,
 	airedRange: EMPTY_DATE_RANGE,
 	startedRange: EMPTY_DATE_RANGE,
 	finishedRange: EMPTY_DATE_RANGE,
@@ -56,7 +56,7 @@ export function isFiltersActive(filters: EntryFilters): boolean {
 		filters.studios.length > 0 ||
 		filters.favoriteOnly ||
 		isRangeActive(filters.episodeRange) ||
-		isRangeActive(filters.ratingRange) ||
+		isRangeActive(filters.scoreRange) ||
 		isDateRangeActive(filters.airedRange) ||
 		isDateRangeActive(filters.startedRange) ||
 		isDateRangeActive(filters.finishedRange) ||

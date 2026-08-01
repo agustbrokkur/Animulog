@@ -1,6 +1,6 @@
 import styled from "styled-components";
 import { useDeferredValue, useMemo, useState } from "react";
-import { EntryRenderer, VIEW_MODES, type ViewMode } from "../components/entry/EntryRenderer";
+import { EntryRenderer, type ViewMode } from "../components/entry/EntryRenderer";
 import { useAnimu } from "../hooks/useAnime";
 import { SquareCheck } from "lucide-react";
 import { GROUP_COLOR_VARS, GROUP_ICONS } from "../types/groupType";
@@ -9,6 +9,7 @@ import { SearchInput } from "../components/layout/actions/SearchInput";
 import { ToolbarButton } from "../components/layout/actions/ToolbarButton";
 import { AddButton } from "../components/layout/actions/AddButton";
 import type { Entry } from "../types/entry";
+import { sectionEntryIds, sortedSections } from "../types/section";
 import { useParams } from "react-router";
 import { useEntrySearch } from "../hooks/useEntrySearch";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
@@ -117,40 +118,6 @@ const EmptyHint = styled.span`
 	font-size: 13px;
 `;
 
-export const testEntry: Entry = {
-	id: "test-mmbn-1",
-	title: "Mega Man: NT Warrior",
-	mediaType: "tv",
-	favorite: true,
-	note: "Rewatching for nostalgia, holds up better than expected.",
-
-	rating: 8,
-	coverUrl: null,
-	relatedEntryIds: ["test-mmbn-axess", "test-mmbn-stream"],
-
-	currentEpisode: 32,
-
-	addedAt: new Date("2026-04-26").getTime(),
-	startedAt: new Date("2026-05-01").getTime(),
-	finishedAt: null,
-	droppedAt: null,
-
-	source: {
-		englishTitle: "Mega Man: NT Warrior",
-		japaneseTitle: "ロックマンエグゼ",
-		synopsis:
-			"In a future where every device is networked, kids team up with personalized programs called Net Navis to battle viruses and cybercriminals. Series protagonist Lan pairs with his Navi, MegaMan, to defend the digital world from an escalating string of threats.",
-		studios: ["Xebec"],
-		genres: ["Action", "Adventure", "Comedy", "Sci-Fi"],
-		coverUrl: "https://cdn.myanimelist.net/images/anime/2/26575.jpg",
-		totalEpisodes: 51,
-		rating: 6.9,
-		airedFrom: new Date("2002-01-08").getTime(),
-		airedTo: new Date("2002-12-24").getTime(),
-		fetchedAt: new Date("2026-07-19").getTime(),
-	},
-};
-
 export const SectionView = () => {
 	const { sectionId } = useParams();
 	const { data: animu } = useAnimu();
@@ -161,12 +128,14 @@ export const SectionView = () => {
 	const [sort, setSort] = useState<EntrySort>(DEFAULT_SORT);
 	const debouncedSearch = useDebouncedValue(search, 200);
 
-	const section = animu?.sections.find((s) => s.id === sectionId);
-	const sections = useMemo(() => animu?.sections ?? [], [animu]);
+	const section = sectionId ? animu?.sections[sectionId] : undefined;
+	const sections = useMemo(() => (animu ? sortedSections(animu.sections) : []), [animu]);
+	const memberIds = useMemo(() => (section ? sectionEntryIds(section) : []), [section]);
 	const entries = useMemo(() => {
-		return section?.entryIds.map((id) => animu?.entries.find((e) => e.id === id)).filter((e): e is NonNullable<typeof e> => e != null) ?? [];
-	}, [section, animu]);
-	const entryOrder = useMemo(() => new Map(section?.entryIds.map((id, index) => [id, index])), [section]);
+		if (!animu) return [];
+		return memberIds.map((id) => animu.entries[id]).filter((e): e is Entry => e != null);
+	}, [memberIds, animu]);
+	const entryOrder = useMemo(() => new Map(memberIds.map((id, index) => [id, index])), [memberIds]);
 
 	const searchedEntries = useEntrySearch(entries, debouncedSearch, "quick");
 
@@ -188,7 +157,7 @@ export const SectionView = () => {
 				<SectionHeader $color={groupColor}>
 					<GroupIcon size={24} color={groupColor} />
 					{section.label}
-					<EntryCount>{section.entryIds.length}</EntryCount>
+					<EntryCount>{memberIds.length}</EntryCount>
 				</SectionHeader>
 				<SectionBody>
 					<SectionBodyGroup>

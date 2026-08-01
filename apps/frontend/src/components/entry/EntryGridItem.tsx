@@ -2,6 +2,7 @@
 import styled from "styled-components";
 import { Star } from "lucide-react";
 import type { Entry } from "../../types/entry";
+import { resolveEntry } from "../../types/entry";
 import { EpisodeStepper } from "../layout/entry/EpisodeStepper";
 import { OpenButton } from "../layout/entry/OpenButton";
 import React from "react";
@@ -121,33 +122,33 @@ interface Props {
 }
 
 export const EntryGridItem = React.memo(({ entry }: Props) => {
-	const coverUrl = entry.coverUrl ?? entry.source.coverUrl ?? undefined;
-	const total = entry.source.totalEpisodes;
+	const { displayTitle, displayCover } = resolveEntry(entry);
+	const total = entry.source?.totalEpisodes ?? null;
 
 	return (
 		<Wrap>
 			<Card>
-				<Img src={coverUrl} loading="lazy" decoding="async" />
+				<Img src={displayCover ?? undefined} loading="lazy" decoding="async" />
 
 				<ProgressBadge>
-					{entry.currentEpisode ?? 0} / {total ?? "?"}
+					{entry.progress ?? 0} / {total ?? "?"}
 				</ProgressBadge>
 
-				{entry.source.rating != null && (
+				{entry.source?.communityRating != null && (
 					<RatingBadge>
 						<Star size={10} fill="#fbbf24" />
-						{entry.source.rating}
+						{entry.source.communityRating}
 					</RatingBadge>
 				)}
 
 				<HoverScrim>
-					<EpisodeStepper current={entry.currentEpisode ?? 0} total={total ?? undefined} onChange={noop} transparent />
+					<EpisodeStepper current={entry.progress ?? 0} total={total ?? undefined} onChange={noop} transparent />
 					<OpenButton to={`/anime/${entry.id}`} transparent />
 				</HoverScrim>
 			</Card>
 
 			<Footer>
-				<Title href={`/anime/${entry.id}`}>{entry.title}</Title>
+				<Title href={`/anime/${entry.id}`}>{displayTitle}</Title>
 			</Footer>
 		</Wrap>
 	);

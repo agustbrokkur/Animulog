@@ -1,6 +1,9 @@
 // utils/computeStatistics.ts
 import type { Entry } from "../types/entry";
+import { resolveEntry } from "../types/entry";
 import type { Section } from "../types/section";
+import { sectionEntryIds, sortedSections } from "../types/section";
+import type { Relation } from "../types/relation";
 import { ENTRY_STATUSES, STATUS_COLORS, STATUS_LABELS } from "../types/status";
 import { MEDIA_TYPES, MEDIA_TYPE_COLORS } from "../types/mediaType";
 import { GROUP_COLOR_VARS } from "../types/groupType";
@@ -38,6 +41,8 @@ export interface Statistics {
 	ratedCount: number;
 	genreCount: number;
 	studioCount: number;
+	totalRewatches: number;
+	metadataCoverage: number; // 0-100, % of entries with a non-null source
 	statusBreakdown: StatBreakdownSlice[];
 	mediaTypeBreakdown: StatBreakdownSlice[];
 	sectionBreakdown: RankedCount[];
@@ -45,6 +50,7 @@ export interface Statistics {
 	topGenres: RankedCount[];
 	topStudios: RankedCount[];
 	topFranchises: RankedCount[];
+	topRewatches: RankedCount[];
 	ratingDistribution: RatingBucket[];
 }
 
@@ -63,8 +69,12 @@ function topN(counts: Map<string, number>, n: number): RankedCount[] {
 		.map(([label, count]) => ({ label, count }));
 }
 
-/** Groups entries into franchises via connected components over `relatedEntryIds`. */
-function computeFranchises(entries: Entry[], n: number): RankedCount[] {
+/**
+ * Groups entries into franchises via connected components over `relations`.
+ * This over-merges (one loose "related" edge fuses two unrelated clusters) — it's a rough
+ * clustering for the stats page, not the curated `Franchise` records the backend can store.
+ */
+function computeFranchises(entries: Entry[], relations: Relation[], n: number): RankedCount[] {
 	const byId = new Map(entries.map((e) => [e.id, e]));
 	const parent = new Map<string, string>();
 
@@ -87,10 +97,8 @@ function computeFranchises(entries: Entry[], n: number): RankedCount[] {
 	};
 
 	for (const entry of entries) parent.set(entry.id, entry.id);
-	for (const entry of entries) {
-		for (const relatedId of entry.relatedEntryIds) {
-			if (byId.has(relatedId)) union(entry.id, relatedId);
-		}
+	for (const relation of relations) {
+		if (byId.has(relation.from) && byId.has(relation.to)) union(relation.from, relation.to);
 	}
 
 	const clusters = new Map<string, Entry[]>();
@@ -106,23 +114,26 @@ function computeFranchises(entries: Entry[], n: number): RankedCount[] {
 		.sort((a, b) => b.length - a.length)
 		.slice(0, n)
 		.map((cluster) => {
-			const earliest = cluster.reduce((oldest, e) => ((e.source.airedFrom ?? e.addedAt) < (oldest.source.airedFrom ?? oldest.addedAt) ? e : oldest));
-			return { label: earliest.title, count: cluster.length };
+			const earliest = cluster.reduce((oldest, e) =>
+				(e.source?.airedFrom ?? e.timestamps.added) < (oldest.source?.airedFrom ?? oldest.timestamps.added) ? e : oldest,
+			);
+			return { label: resolveEntry(earliest).displayTitle, count: cluster.length };
 		});
 }
 
-export function computeStatistics(entries: Entry[], sections: Section[]): Statistics {
+export function computeStatistics(entriesById: Record<string, Entry>, sectionsById: Record<string, Section>, relations: Relation[]): Statistics {
+	const entries = Object.values(entriesById);
+	const sections = sortedSections(sectionsById);
 	const totalEntries = entries.length;
-	const totalEpisodesWatched = entries.reduce((sum, e) => sum + (e.currentEpisode ?? 0), 0);
+	const totalEpisodesWatched = entries.reduce((sum, e) => sum + (e.progress ?? 0), 0);
 	const favoritesCount = entries.filter((e) => e.favorite).length;
 
-	const ratedEntries = entries.filter((e): e is Entry & { rating: number } => e.rating != null);
-	const averageRating = ratedEntries.length > 0 ? ratedEntries.reduce((sum, e) => sum + e.rating, 0) / ratedEntries.length : null;
+	const ratedEntries = entries.filter((e): e is Entry & { score: number } => e.score != null);
+	const averageRating = ratedEntries.length > 0 ? ratedEntries.reduce((sum, e) => sum + e.score, 0) / ratedEntries.length : null;
 
 	const statusCounts = new Map(ENTRY_STATUSES.map((status) => [status, 0]));
 	for (const entry of entries) {
-		const status = entry.droppedAt ? "dropped" : entry.finishedAt ? "finished" : entry.startedAt ? "watching" : "backlog";
-		statusCounts.set(status, (statusCounts.get(status) ?? 0) + 1);
+		statusCounts.set(entry.status, (statusCounts.get(entry.status) ?? 0) + 1);
 	}
 	const statusBreakdown: StatBreakdownSlice[] = ENTRY_STATUSES.map((status) => ({
 		key: status,
@@ -151,11 +162,11 @@ export function computeStatistics(entries: Entry[], sections: Section[]): Statis
 	}
 	const monthIndex = new Map(months.map((m, i) => [m.month, i]));
 	for (const entry of entries) {
-		const addedIdx = monthIndex.get(monthKey(entry.addedAt));
+		const addedIdx = monthIndex.get(monthKey(entry.timestamps.added));
 		if (addedIdx != null) months[addedIdx].added += 1;
 
-		if (entry.finishedAt != null) {
-			const finishedIdx = monthIndex.get(monthKey(entry.finishedAt));
+		if (entry.timestamps.lastFinished != null) {
+			const finishedIdx = monthIndex.get(monthKey(entry.timestamps.lastFinished));
 			if (finishedIdx != null) months[finishedIdx].finished += 1;
 		}
 	}
@@ -163,19 +174,31 @@ export function computeStatistics(entries: Entry[], sections: Section[]): Statis
 	const genreCounts = new Map<string, number>();
 	const studioCounts = new Map<string, number>();
 	for (const entry of entries) {
-		for (const genre of entry.source.genres) genreCounts.set(genre, (genreCounts.get(genre) ?? 0) + 1);
-		for (const studio of entry.source.studios) studioCounts.set(studio, (studioCounts.get(studio) ?? 0) + 1);
+		for (const genre of entry.source?.genres ?? []) genreCounts.set(genre, (genreCounts.get(genre) ?? 0) + 1);
+		for (const studio of entry.source?.studios ?? []) studioCounts.set(studio, (studioCounts.get(studio) ?? 0) + 1);
 	}
 
 	const sectionBreakdown: RankedCount[] = [...sections]
-		.sort((a, b) => b.entryIds.length - a.entryIds.length)
-		.map((section) => ({ label: section.label, count: section.entryIds.length, color: GROUP_COLOR_VARS[section.group] }));
+		.sort((a, b) => sectionEntryIds(b).length - sectionEntryIds(a).length)
+		.map((section) => ({ label: section.label, count: sectionEntryIds(section).length, color: GROUP_COLOR_VARS[section.group] }));
 
-	const topFranchises = computeFranchises(entries, 8);
+	const topFranchises = computeFranchises(entries, relations, 8);
+
+	const rewatchCounts = new Map<string, number>();
+	let totalRewatches = 0;
+	for (const entry of entries) {
+		const rewatches = Math.max(0, entry.timestamps.finishedCount - 1);
+		if (rewatches > 0) rewatchCounts.set(resolveEntry(entry).displayTitle, rewatches);
+		totalRewatches += rewatches;
+	}
+	const topRewatches = topN(rewatchCounts, 8);
+
+	const sourcedCount = entries.filter((e) => e.source != null).length;
+	const metadataCoverage = totalEntries > 0 ? Math.round((sourcedCount / totalEntries) * 100) : 0;
 
 	const ratingCounts = new Map<number, number>();
 	for (const entry of ratedEntries) {
-		const bucket = Math.round(entry.rating);
+		const bucket = Math.round(entry.score);
 		ratingCounts.set(bucket, (ratingCounts.get(bucket) ?? 0) + 1);
 	}
 	const ratingDistribution: RatingBucket[] = Array.from({ length: 10 }, (_, i) => i + 1).map((rating) => ({
@@ -191,6 +214,8 @@ export function computeStatistics(entries: Entry[], sections: Section[]): Statis
 		ratedCount: ratedEntries.length,
 		genreCount: genreCounts.size,
 		studioCount: studioCounts.size,
+		totalRewatches,
+		metadataCoverage,
 		statusBreakdown,
 		mediaTypeBreakdown,
 		sectionBreakdown,
@@ -198,6 +223,7 @@ export function computeStatistics(entries: Entry[], sections: Section[]): Statis
 		topGenres: topN(genreCounts, 8),
 		topStudios: topN(studioCounts, 8),
 		topFranchises,
+		topRewatches,
 		ratingDistribution,
 	};
 }

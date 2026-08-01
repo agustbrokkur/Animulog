@@ -1,27 +1,23 @@
 // types/status.ts
-import type { Entry } from "./entry";
 
-export type EntryStatus = "watching" | "finished" | "dropped" | "backlog";
+export type Status = "unsorted" | "backlog" | "watching" | "on_hold" | "watched" | "dropped";
 
-export const ENTRY_STATUSES: EntryStatus[] = ["watching", "finished", "dropped", "backlog"];
+export const ENTRY_STATUSES: Status[] = ["unsorted", "backlog", "watching", "on_hold", "watched", "dropped"];
 
-export const STATUS_LABELS: Record<EntryStatus, string> = {
-	watching: "Watching",
-	finished: "Finished",
-	dropped: "Dropped",
+export const STATUS_LABELS: Record<Status, string> = {
+	unsorted: "Unsorted",
 	backlog: "Backlog",
+	watching: "Watching",
+	on_hold: "On Hold",
+	watched: "Watched",
+	dropped: "Dropped",
 };
 
-export const STATUS_COLORS: Record<EntryStatus, string> = {
-	watching: "#2dd4bf",
-	finished: "#60a5fa",
-	dropped: "#f87171",
+export const STATUS_COLORS: Record<Status, string> = {
+	unsorted: "#9ca3af",
 	backlog: "#fbbf24",
+	watching: "#2dd4bf",
+	on_hold: "#c084fc",
+	watched: "#60a5fa",
+	dropped: "#f87171",
 };
-
-export function getEntryStatus(entry: Entry): EntryStatus {
-	if (entry.droppedAt) return "dropped";
-	if (entry.finishedAt) return "finished";
-	if (entry.startedAt) return "watching";
-	return "backlog";
-}

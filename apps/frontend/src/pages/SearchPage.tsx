@@ -13,6 +13,7 @@ import { FilterMenu } from "../components/layout/actions/FilterMenu/FilterMenu";
 import { SortMenu } from "../components/layout/actions/SortMenu/SortMenu";
 import { type EntrySort, DEFAULT_SORT } from "../types/sort";
 import { sortEntries } from "../utils/sortEntries";
+import { sortedSections } from "../types/section";
 
 const Wrap = styled.div`
 	overflow-y: auto;
@@ -121,8 +122,8 @@ export const SearchView = () => {
 	const [sort, setSort] = useState<EntrySort>(DEFAULT_SORT);
 	const debouncedSearch = useDebouncedValue(search, 200);
 
-	const entries = useMemo(() => animu?.entries ?? [], [animu]);
-	const sections = useMemo(() => animu?.sections ?? [], [animu]);
+	const entries = useMemo(() => Object.values(animu?.entries ?? {}), [animu]);
+	const sections = useMemo(() => (animu ? sortedSections(animu.sections) : []), [animu]);
 
 	const searchedEntries = useEntrySearch(entries, debouncedSearch, "full");
 

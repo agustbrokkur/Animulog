@@ -17,9 +17,9 @@ interface FilterMenuProps {
 	onChange: (filters: EntryFilters) => void;
 }
 
-const NUMBER_RANGES: { key: "episodeRange" | "ratingRange"; label: string; max?: number }[] = [
+const NUMBER_RANGES: { key: "episodeRange" | "scoreRange"; label: string; max?: number }[] = [
 	{ key: "episodeRange", label: "Episodes" },
-	{ key: "ratingRange", label: "Rating", max: 10 },
+	{ key: "scoreRange", label: "Rating", max: 10 },
 ];
 
 const DATE_RANGES: { key: "airedRange" | "startedRange" | "finishedRange" | "droppedRange"; label: string }[] = [
@@ -34,13 +34,13 @@ export const FilterMenu = ({ entries, filters, onChange }: FilterMenuProps) => {
 
 	const availableGenres = useMemo(() => {
 		const set = new Set<string>();
-		entries.forEach((e) => e.source.genres.forEach((g) => set.add(g)));
+		entries.forEach((e) => e.source?.genres.forEach((g) => set.add(g)));
 		return Array.from(set).sort();
 	}, [entries]);
 
 	const availableStudios = useMemo(() => {
 		const set = new Set<string>();
-		entries.forEach((e) => e.source.studios.forEach((s) => set.add(s)));
+		entries.forEach((e) => e.source?.studios.forEach((s) => set.add(s)));
 		return Array.from(set).sort();
 	}, [entries]);
 
@@ -51,7 +51,7 @@ export const FilterMenu = ({ entries, filters, onChange }: FilterMenuProps) => {
 		filters.studios.length +
 		(filters.favoriteOnly ? 1 : 0) +
 		(isRangeActive(filters.episodeRange) ? 1 : 0) +
-		(isRangeActive(filters.ratingRange) ? 1 : 0) +
+		(isRangeActive(filters.scoreRange) ? 1 : 0) +
 		(isDateRangeActive(filters.airedRange) ? 1 : 0) +
 		(isDateRangeActive(filters.startedRange) ? 1 : 0) +
 		(isDateRangeActive(filters.finishedRange) ? 1 : 0) +
@@ -77,7 +77,7 @@ export const FilterMenu = ({ entries, filters, onChange }: FilterMenuProps) => {
 		onChange({ ...filters, studios: next });
 	};
 
-	const setNumberRange = (key: "episodeRange" | "ratingRange", patch: Partial<NumberRange>) => {
+	const setNumberRange = (key: "episodeRange" | "scoreRange", patch: Partial<NumberRange>) => {
 		onChange({ ...filters, [key]: { ...filters[key], ...patch } });
 	};
 

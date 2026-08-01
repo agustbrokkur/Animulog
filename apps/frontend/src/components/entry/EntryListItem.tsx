@@ -1,6 +1,7 @@
 import styled from "styled-components";
 import { Star } from "lucide-react";
 import type { Entry } from "../../types/entry";
+import { resolveEntry } from "../../types/entry";
 import type { Section } from "../../types/section";
 import { MEDIA_ICONS } from "../../types/mediaType";
 import { EntryPill } from "../layout/entry/EntryPill";
@@ -99,20 +100,20 @@ interface Props {
 
 export const EntryListItem = React.memo(({ entry, order, sections }: Props) => {
 	const Icon = MEDIA_ICONS[entry.mediaType];
-	const coverUrl = entry.coverUrl ?? entry.source.coverUrl ?? undefined;
-	const total = entry.source.totalEpisodes;
-	const current = entry.currentEpisode ?? 0;
+	const { displayTitle, displayCover } = resolveEntry(entry);
+	const total = entry.source?.totalEpisodes ?? null;
+	const current = entry.progress ?? 0;
 	const percent = total ? Math.min(100, (current / total) * 100) : 0;
 
 	return (
 		<Row>
-			<EntryCoverCompact src={coverUrl} to={`/anime/${entry.id}`} favorite={entry.favorite} />
+			<EntryCoverCompact src={displayCover ?? undefined} to={`/anime/${entry.id}`} favorite={entry.favorite} />
 
 			<Info>
 				{order != null && <EntryPill>#{order}</EntryPill>}
 
 				<TitleBlock>
-					<EntryTitle to={`/anime/${entry.id}`} title={entry.title} />
+					<EntryTitle to={`/anime/${entry.id}`} title={displayTitle} />
 				</TitleBlock>
 
 				<EntryPill>
@@ -120,10 +121,10 @@ export const EntryListItem = React.memo(({ entry, order, sections }: Props) => {
 					{entry.mediaType.toUpperCase()}
 				</EntryPill>
 
-				{entry.source.rating != null && (
+				{entry.source?.communityRating != null && (
 					<EntryPill color="#fbbf24">
 						<Star size={11} fill="#fbbf24" />
-						{entry.source.rating}
+						{entry.source.communityRating}
 					</EntryPill>
 				)}
 

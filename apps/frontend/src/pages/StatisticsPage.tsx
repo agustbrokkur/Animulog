@@ -1,6 +1,6 @@
 import styled from "styled-components";
 import { useMemo } from "react";
-import { BarChart3, Building2, CheckCircle2, Heart, ListVideo, Library, Star, Tags } from "lucide-react";
+import { BarChart3, Building2, CheckCircle2, Heart, Link2, ListVideo, Library, Repeat, Star, Tags } from "lucide-react";
 import { useAnimu } from "../hooks/useAnime";
 import { computeStatistics } from "../utils/computeStatistics";
 import { StatCard } from "../components/statistics/StatCard";
@@ -112,9 +112,10 @@ const EmptyHint = styled.span`
 
 export const StatisticsView = () => {
 	const { data: animu } = useAnimu();
-	const entries = useMemo(() => animu?.entries ?? [], [animu]);
-	const sections = useMemo(() => animu?.sections ?? [], [animu]);
-	const stats = useMemo(() => computeStatistics(entries, sections), [entries, sections]);
+	const entries = useMemo(() => animu?.entries ?? {}, [animu]);
+	const sections = useMemo(() => animu?.sections ?? {}, [animu]);
+	const relations = useMemo(() => animu?.relations ?? [], [animu]);
+	const stats = useMemo(() => computeStatistics(entries, sections, relations), [entries, sections, relations]);
 
 	return (
 		<Wrap>
@@ -141,6 +142,8 @@ export const StatisticsView = () => {
 						<StatCard icon={CheckCircle2} label="Rated" value={stats.ratedCount.toLocaleString()} color="var(--color-accent)" />
 						<StatCard icon={Tags} label="Genres tracked" value={stats.genreCount.toLocaleString()} color="var(--color-purple)" />
 						<StatCard icon={Building2} label="Studios tracked" value={stats.studioCount.toLocaleString()} color="var(--color-blue)" />
+						<StatCard icon={Repeat} label="Rewatches" value={stats.totalRewatches.toLocaleString()} color="var(--color-green)" />
+						<StatCard icon={Link2} label="Metadata synced" value={`${stats.metadataCoverage}%`} color="var(--color-accent)" />
 					</OverviewGrid>
 
 					<Group>
@@ -180,6 +183,10 @@ export const StatisticsView = () => {
 
 							<ChartCard title="Top Franchises">
 								<RankedBarList items={stats.topFranchises} color="var(--color-gold)" emptyLabel="No linked franchises yet." />
+							</ChartCard>
+
+							<ChartCard title="Most Rewatched">
+								<RankedBarList items={stats.topRewatches} color="var(--color-green)" emptyLabel="No rewatches yet." />
 							</ChartCard>
 						</GroupGrid>
 					</Group>

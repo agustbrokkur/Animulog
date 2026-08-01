@@ -1,27 +1,28 @@
 // utils/sortEntries.ts
 import type { Entry } from "../types/entry";
+import { resolveEntry } from "../types/entry";
 import type { EntrySort, SortKey } from "../types/sort";
 
 const getSortValue = (entry: Entry, key: SortKey): number | string | null => {
 	switch (key) {
 		case "title":
-			return entry.title.toLowerCase();
-		case "myRating":
-			return entry.rating;
+			return resolveEntry(entry).displayTitle.toLowerCase();
+		case "score":
+			return entry.score;
 		case "communityRating":
-			return entry.source.rating;
+			return entry.source?.communityRating ?? null;
 		case "episodesWatched":
-			return entry.currentEpisode;
+			return entry.progress;
 		case "totalEpisodes":
-			return entry.source.totalEpisodes;
+			return entry.source?.totalEpisodes ?? null;
 		case "addedAt":
-			return entry.addedAt;
+			return entry.timestamps.added;
 		case "startedAt":
-			return entry.startedAt;
+			return entry.timestamps.lastStarted;
 		case "finishedAt":
-			return entry.finishedAt;
+			return entry.timestamps.lastFinished;
 		case "aired":
-			return entry.source.airedFrom;
+			return entry.source?.airedFrom ?? null;
 		default:
 			return null;
 	}
