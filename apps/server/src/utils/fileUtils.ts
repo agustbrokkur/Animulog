@@ -6,7 +6,15 @@ const DATA_FILE = "./src/database/animu.json";
 const SETTINGS_FILE = "./src/database/settings.json";
 
 export function readAnimuData(): Animu {
-    return JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
+    const data: Animu = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
+    // Entries written before `tags`/`totalEpisodesOverride` existed on the model are missing them
+    // entirely (undefined, not null) — validation rejects undefined, so any update on an unmigrated
+    // entry would fail. Backfilling here self-heals the file the next time each entry is saved.
+    for (const entry of Object.values(data.entries)) {
+        entry.tags ??= [];
+        entry.totalEpisodesOverride ??= null;
+    }
+    return data;
 }
 
 export function writeAnimuData(data: Animu): void {
