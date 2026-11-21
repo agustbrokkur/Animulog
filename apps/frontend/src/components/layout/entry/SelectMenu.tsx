@@ -25,7 +25,7 @@ export const SelectMenu = <T extends string>({ options, selectedId, onSelect, tr
 
 	return (
 		<Wrap ref={wrapRef}>
-			<TriggerButton $transparent={transparent} onClick={() => setOpen((v) => !v)}>
+			<TriggerButton type="button" $transparent={transparent} onClick={() => setOpen((v) => !v)}>
 				{TriggerIcon ? <TriggerIcon size={12} color={selected?.color} /> : selected?.color && <Dot $color={selected.color} />}
 				{selected?.label ?? "Select"}
 			</TriggerButton>
@@ -39,6 +39,7 @@ export const SelectMenu = <T extends string>({ options, selectedId, onSelect, tr
 							return (
 								<Option
 									key={o.id}
+									type="button"
 									$checked={checked}
 									onClick={() => {
 										if (!checked) onSelect(o.id);

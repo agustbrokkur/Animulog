@@ -5,7 +5,7 @@ import { FolderCog, Pencil, Trash2, type LucideIcon } from "lucide-react";
 import { useAnimu, useCreateSection, useDeleteSection, useReorderSections, useUpdateSection } from "../hooks/useAnime";
 import { GROUP_TYPES, GROUP_TYPE_MAPPINGS, GROUP_ICONS, GROUP_COLOR_VARS, type GroupType } from "../types/groupType";
 import { sectionEntryIds, sortedSections, type Section } from "../types/section";
-import { ActionButton, EditRow, EditLabel, Input } from "../components/entry/EntryDetailBody.styles";
+import { ActionButton, EditRow, EditLabel, Input, NoteTextarea } from "../components/entry/EntryDetailBody.styles";
 import { AddButton } from "../components/layout/actions/AddButton";
 import { FormDialog } from "../components/ui/FormDialog";
 import { GroupMenu } from "../components/layout/entry/GroupMenu";
@@ -163,6 +163,16 @@ const CardCount = styled.span<{ $color: string }>`
 	color: ${({ $color }) => $color};
 `;
 
+const CardDescription = styled.p`
+	font-size: 13px;
+	line-height: 1.4;
+	color: var(--text-dim);
+	overflow: hidden;
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+`;
+
 const CardActions = styled.div`
 	display: flex;
 	gap: 10px;
@@ -244,6 +254,7 @@ const SectionCard = ({ section, color, Icon, index, groupSize, onReorder, onRena
 						{section.label}
 					</CardLabel>
 					<CardCount $color={color}>{sectionEntryIds(section).length}</CardCount>
+					{section.description && <CardDescription>{section.description}</CardDescription>}
 				</CardLink>
 				<CardActions>
 					<ActionButton onClick={onRename}>
@@ -264,6 +275,7 @@ export const SectionsIndexView = () => {
 
 	const [dialog, setDialog] = useState<DialogState | null>(null);
 	const [labelInput, setLabelInput] = useState("");
+	const [descriptionInput, setDescriptionInput] = useState("");
 	const [groupInput, setGroupInput] = useState<GroupType>("watching");
 
 	const { mutate: createSection } = useCreateSection();
@@ -290,12 +302,14 @@ export const SectionsIndexView = () => {
 
 	const openCreate = () => {
 		setLabelInput("");
+		setDescriptionInput("");
 		setGroupInput("watching");
 		setDialog({ mode: "create" });
 	};
 
 	const openRename = (section: Section) => {
 		setLabelInput(section.label);
+		setDescriptionInput(section.description ?? "");
 		setGroupInput(section.group);
 		setDialog({ mode: "rename", section });
 	};
@@ -303,11 +317,12 @@ export const SectionsIndexView = () => {
 	const handleSubmit = () => {
 		const label = labelInput.trim();
 		if (!label || !dialog) return;
+		const description = descriptionInput.trim() || null;
 
 		if (dialog.mode === "create") {
-			createSection({ label, group: groupInput, system: false, kind: "manual" });
+			createSection({ label, description, group: groupInput, system: false, kind: "manual" });
 		} else {
-			updateSection({ sectionId: dialog.section.id, patch: { label, group: groupInput } });
+			updateSection({ sectionId: dialog.section.id, patch: { label, description, group: groupInput } });
 		}
 		setDialog(null);
 	};
@@ -380,6 +395,10 @@ export const SectionsIndexView = () => {
 					<EditRow>
 						<EditLabel>Label</EditLabel>
 						<Input type="text" value={labelInput} onChange={(e) => setLabelInput(e.target.value)} placeholder="e.g. Currently Watching" autoFocus />
+					</EditRow>
+					<EditRow>
+						<EditLabel>Description</EditLabel>
+						<NoteTextarea value={descriptionInput} onChange={(e) => setDescriptionInput(e.target.value)} placeholder="What is this section for?" />
 					</EditRow>
 					<EditRow>
 						<EditLabel>Group</EditLabel>

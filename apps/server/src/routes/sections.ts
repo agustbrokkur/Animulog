@@ -3,7 +3,7 @@ import type { CreateSection, ManualSection, Section, SectionEntries, SmartSectio
 import { isValidId, isValidIdArray, validateCreateSection, validateSectionEntries, validateUpdateSection } from "../utils/validators.ts";
 import { asSectionId, newSectionId } from "../models/ids.ts";
 import { handleError } from "../utils/errorUtils.ts";
-import { readAnimuData, writeAnimuData } from "../utils/fileUtils.ts";
+import { readAnimuData, withUnsortedFallback, writeAnimuData } from "../utils/fileUtils.ts";
 
 const sectionRouter = Router();
 
@@ -11,7 +11,7 @@ const sectionRouter = Router();
 // list all sections
 sectionRouter.get("/", (_: Request, res: Response) => {
     try {
-        const data = readAnimuData();
+        const data = withUnsortedFallback(readAnimuData());
         const sections = Object.values(data.sections);
 
         res.status(200).json(sections);
@@ -39,13 +39,14 @@ sectionRouter.post("/", (req: Request<any, any, CreateSection>, res: Response) =
             });
         }
 
-        const newId = newSectionId();
+        const newId = newSectionId(Object.keys(data.sections));
         const order = Object.keys(data.sections).length;
 
         const newSection: Section = createdSection.kind === "smart"
             ? {
                 id: newId,
                 label: createdSection.label,
+                description: createdSection.description ?? null,
                 group: createdSection.group,
                 system: createdSection.system,
                 order,
@@ -56,6 +57,7 @@ sectionRouter.post("/", (req: Request<any, any, CreateSection>, res: Response) =
             : {
                 id: newId,
                 label: createdSection.label,
+                description: createdSection.description ?? null,
                 group: createdSection.group,
                 system: createdSection.system,
                 order,
@@ -86,7 +88,7 @@ sectionRouter.get("/:id", (req: Request<{ id: string }>, res: Response) => {
             });
         }
 
-        const data = readAnimuData();
+        const data = withUnsortedFallback(readAnimuData());
         const section = data.sections[asSectionId(id)];
 
         if (!section) {
@@ -135,7 +137,7 @@ sectionRouter.put("/reorder", (req: Request<any, any, { sectionIds: string[] }>,
 
 // PUT /api/animu/sections/:id
 // Update section label
-sectionRouter.put("/:id", (req: Request<{ id: string }, any, { label: string; group: Section["group"] }>, res: Response) => {
+sectionRouter.put("/:id", (req: Request<{ id: string }, any, { label: string; description: string | null; group: Section["group"] }>, res: Response) => {
     try {
         const { id } = req.params;
         if (!isValidId(id)) {
@@ -171,6 +173,7 @@ sectionRouter.put("/:id", (req: Request<{ id: string }, any, { label: string; gr
         const newSectionName = updatedSection.label;
 
         existingSection.label = newSectionName;
+        existingSection.description = updatedSection.description;
         existingSection.group = updatedSection.group;
         writeAnimuData(data);
 

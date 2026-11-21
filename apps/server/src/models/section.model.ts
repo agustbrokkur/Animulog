@@ -20,6 +20,7 @@ export type SortSpec = { key: SortKey; direction: "asc" | "desc" };
 type SectionBase = {
     id: SectionId;
     label: string;
+    description: string | null;
     group: GroupType;
     system: boolean;
     order: number;
@@ -36,8 +37,8 @@ export type CreateManualSection = Omit<ManualSection, "id" | "order" | "entryIds
 export type CreateSmartSection = Omit<SmartSection, "id" | "order">;
 export type CreateSection = CreateManualSection | CreateSmartSection;
 
-// label/group are shared by both branches, so Pick over the Section union is safe here —
+// label/description/group are shared by both branches, so Pick over the Section union is safe here —
 // unlike entryIds/filter/sort, which only exist on one branch and would collapse the discriminant.
-export type UpdateSection = Pick<Section, "label" | "group">;
+export type UpdateSection = Pick<Section, "label" | "description" | "group">;
 
 export type SectionEntries = { entryIds: EntryId[] };

@@ -5,7 +5,6 @@ import { useAnimu } from "../hooks/useAnime";
 import { Star } from "lucide-react";
 import { ViewModeSwitcher } from "../components/layout/actions/ViewModeSwitcher";
 import { SearchInput } from "../components/layout/actions/SearchInput";
-import { AddButton } from "../components/layout/actions/AddButton";
 import type { Entry } from "../types/entry";
 import { sortedSections } from "../types/section";
 import { useEntrySearch } from "../hooks/useEntrySearch";
@@ -150,7 +149,6 @@ export const FavoritesView = () => {
 					</SectionBodyGroup>
 					<SectionBodyGroup>
 						<ViewModeSwitcher viewMode={viewMode} onViewModeChange={setViewMode} />
-						<AddButton />
 					</SectionBodyGroup>
 				</SectionBody>
 			</Header>

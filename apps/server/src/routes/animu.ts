@@ -1,6 +1,6 @@
 import { type Request, type Response, Router } from "express";
 import { handleError } from "../utils/errorUtils.ts";
-import { readAnimuData } from "../utils/fileUtils.ts";
+import { readAnimuData, withUnsortedFallback } from "../utils/fileUtils.ts";
 import { sectionRouter } from "./sections.ts";
 import { entryRouter } from "./entries.ts";
 import { franchiseRouter } from "./franchises.ts";
@@ -20,7 +20,7 @@ animuRouter.get("/", (_: Request, res: Response) => {
     try {
         const data = readAnimuData();
 
-        res.status(200).json(data);
+        res.status(200).json(withUnsortedFallback(data));
     } catch (error: unknown) {
         handleError(res, error, "Error fetching animulog");
     }

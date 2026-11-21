@@ -2,6 +2,7 @@ import { type Request, type Response, Router } from "express";
 import type { CreateEntry, Entry, EntrySource, UpdateEntry } from "../models/entry.model.ts";
 import { isValidId, isValidString, validateCreateEntry, validateEntrySource, validateUpdateEntry } from "../utils/validators.ts";
 import { asEntryId, franchiseIdFor, newEntryId } from "../models/ids.ts";
+import { isManual } from "../models/section.model.ts";
 import { handleError } from "../utils/errorUtils.ts";
 import { readAnimuData, readSettings, writeAnimuData } from "../utils/fileUtils.ts";
 
@@ -33,7 +34,7 @@ entryRouter.post("/", (req: Request<any, any, CreateEntry>, res: Response) => {
         }
 
         const data = readAnimuData();
-        const newId = newEntryId();
+        const newId = newEntryId(Object.keys(data.entries));
         const now = Date.now();
         const newEntry: Entry = {
             id: newId,
@@ -66,6 +67,7 @@ entryRouter.post("/", (req: Request<any, any, CreateEntry>, res: Response) => {
         res.status(201).json({
             message: `Entry with id ${newEntry.id} created`,
             ok: true,
+            id: newEntry.id,
         });
     } catch (error: unknown) {
         handleError(res, error, "Error creating entry");
@@ -156,6 +158,15 @@ entryRouter.delete("/:id", (req: Request<{ id: string }>, res: Response) => {
         }
 
         delete data.entries[asEntryId(id)];
+
+        // A deleted entry must not linger as a phantom id in any section/franchise membership list.
+        for (const section of Object.values(data.sections)) {
+            if (isManual(section)) section.entryIds = section.entryIds.filter(eid => eid !== asEntryId(id));
+        }
+        for (const franchise of Object.values(data.franchises)) {
+            franchise.entryIds = franchise.entryIds.filter(eid => eid !== asEntryId(id));
+        }
+
         writeAnimuData(data);
 
         res.status(201).json({ ok: true });

@@ -7,6 +7,7 @@ import { Library } from "lucide-react";
 import { ViewModeSwitcher } from "../components/layout/actions/ViewModeSwitcher";
 import { SearchInput } from "../components/layout/actions/SearchInput";
 import { AddButton } from "../components/layout/actions/AddButton";
+import { CreateEntryDialog } from "../components/entry/CreateEntryDialog";
 import { sortedSections } from "../types/section";
 import { useEntrySearch } from "../hooks/useEntrySearch";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
@@ -119,6 +120,7 @@ export const EntriesIndexView = () => {
 	const [filters, setFilters] = useState<EntryFilters>(EMPTY_FILTERS);
 	const [sort, setSort] = useState<EntrySort>(DEFAULT_SORT);
 	const debouncedSearch = useDebouncedValue(search, 200);
+	const [showCreate, setShowCreate] = useState(false);
 
 	// Settings arrive async, after the initial render, so the defaults are applied once via this guard
 	// rather than as the useState initial value.
@@ -158,10 +160,12 @@ export const EntriesIndexView = () => {
 					</SectionBodyGroup>
 					<SectionBodyGroup>
 						<ViewModeSwitcher viewMode={viewMode} onViewModeChange={setViewMode} />
-						<AddButton />
+						<AddButton onClick={() => setShowCreate(true)} />
 					</SectionBodyGroup>
 				</SectionBody>
 			</Header>
+
+			{showCreate && <CreateEntryDialog onCancel={() => setShowCreate(false)} onCreated={() => setShowCreate(false)} />}
 
 			{visibleEntries.length === 0 ? (
 				<EmptyState>

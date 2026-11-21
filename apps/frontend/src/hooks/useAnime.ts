@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+	createEntry,
 	createSection,
 	deleteEntry,
 	deleteFranchise,
@@ -14,7 +15,7 @@ import {
 	updateSectionEntries,
 } from "../services/animuService";
 import type { Animu } from "../types/animu";
-import type { Entry, UpdateEntry } from "../types/entry";
+import type { CreateEntry, Entry, UpdateEntry } from "../types/entry";
 import type { UpdateFranchise } from "../types/franchise";
 import type { MediaType } from "../types/mediaType";
 import type { Status } from "../types/status";
@@ -32,6 +33,16 @@ export const useReorderSectionEntries = () => {
 
 	return useMutation({
 		mutationFn: ({ sectionId, entryIds }: { sectionId: string; entryIds: string[] }) => updateSectionEntries(sectionId, entryIds),
+		onSuccess: () => queryClient.invalidateQueries({ queryKey: ["animu"] }),
+	});
+};
+
+/** Creates a new library entry. Resolves with the new entry's id, e.g. so a caller can add it to a section right after. */
+export const useCreateEntry = () => {
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: (entry: CreateEntry) => createEntry(entry),
 		onSuccess: () => queryClient.invalidateQueries({ queryKey: ["animu"] }),
 	});
 };

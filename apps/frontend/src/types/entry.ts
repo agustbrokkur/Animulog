@@ -59,6 +59,10 @@ export type Entry = {
 
 export type UpdateEntry = Omit<Entry, "id" | "source">;
 
+// source is never client-settable — a new entry always starts with source: null (the cache is populated later).
+// status defaults server-side (settings.defaultEntryStatus) when omitted.
+export type CreateEntry = Omit<Entry, "id" | "timestamps" | "source" | "status"> & { status?: Status };
+
 /** True when `source` is either absent or a "legacy" placeholder with no real provider data — both cases a source fetch should treat as unfetched. */
 export function needsSourceFetch(entry: Pick<Entry, "source">): boolean {
 	return entry.source === null || entry.source.provider === "legacy";

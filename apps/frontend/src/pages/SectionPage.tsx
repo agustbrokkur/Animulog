@@ -7,6 +7,7 @@ import { GROUP_COLOR_VARS, GROUP_ICONS } from "../types/groupType";
 import { ViewModeSwitcher } from "../components/layout/actions/ViewModeSwitcher";
 import { SearchInput } from "../components/layout/actions/SearchInput";
 import { AddButton } from "../components/layout/actions/AddButton";
+import { CreateEntryDialog } from "../components/entry/CreateEntryDialog";
 import type { Entry } from "../types/entry";
 import { isManualSection, sectionEntryIds, sortedSections } from "../types/section";
 import { useParams } from "react-router";
@@ -40,6 +41,13 @@ const SectionHeader = styled.h1<{ $color: string }>`
 	letter-spacing: 0.04em;
 	text-transform: uppercase;
 	color: ${({ $color }) => $color};
+`;
+
+const SectionDescription = styled.p`
+	font-size: 13px;
+	line-height: 1.5;
+	color: var(--text-dim);
+	max-width: 640px;
 `;
 
 const EntryCount = styled.span`
@@ -127,6 +135,7 @@ export const SectionView = () => {
 	const [filters, setFilters] = useState<EntryFilters>(EMPTY_FILTERS);
 	const [sort, setSort] = useState<EntrySort>(DEFAULT_SORT);
 	const debouncedSearch = useDebouncedValue(search, 200);
+	const [showCreate, setShowCreate] = useState(false);
 
 	// Settings arrive async, after the initial render, so the defaults are applied once via this guard
 	// rather than as the useState initial value.
@@ -165,6 +174,17 @@ export const SectionView = () => {
 		[section, memberIds, reorderMutation],
 	);
 
+	/** New entries created from within a manual section land in that section immediately; smart sections derive membership from their filter, so there's nothing to attach to. */
+	const handleCreated = useCallback(
+		(entryId: string) => {
+			setShowCreate(false);
+			if (section && isManualSection(section)) {
+				reorderMutation.mutate({ sectionId: section.id, entryIds: [...memberIds, entryId] });
+			}
+		},
+		[section, memberIds, reorderMutation],
+	);
+
 	const searchedEntries = useEntrySearch(entries, debouncedSearch, "quick");
 
 	const deferredFilters = useDeferredValue(filters);
@@ -187,6 +207,7 @@ export const SectionView = () => {
 					{section.label}
 					<EntryCount>{memberIds.length}</EntryCount>
 				</SectionHeader>
+				{section.description && <SectionDescription>{section.description}</SectionDescription>}
 				<SectionBody>
 					<SectionBodyGroup>
 						<SearchInput value={search} onChange={setSearch} />
@@ -195,10 +216,12 @@ export const SectionView = () => {
 					</SectionBodyGroup>
 					<SectionBodyGroup>
 						<ViewModeSwitcher viewMode={viewMode} onViewModeChange={setViewMode} />
-						<AddButton />
+						<AddButton onClick={() => setShowCreate(true)} />
 					</SectionBodyGroup>
 				</SectionBody>
 			</Header>
+
+			{showCreate && <CreateEntryDialog onCancel={() => setShowCreate(false)} onCreated={handleCreated} />}
 
 			{visibleEntries.length === 0 ? (
 				<EmptyState>

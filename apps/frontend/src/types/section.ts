@@ -19,6 +19,7 @@ export type SmartSectionSort = { key: SmartSectionSortKey; direction: "asc" | "d
 type SectionBase = {
 	id: string;
 	label: string;
+	description: string | null;
 	group: GroupType;
 	system: boolean;
 	order: number;
@@ -32,8 +33,8 @@ export const isManualSection = (s: Section): s is ManualSection => s.kind === "m
 export const isSmartSection = (s: Section): s is SmartSection => s.kind === "smart";
 
 /** Frontend section creation is manual-only for now — smart-section filters aren't evaluated on the frontend yet. */
-export type CreateSection = { label: string; group: GroupType; system: false; kind: "manual" };
-export type UpdateSection = Pick<Section, "label" | "group">;
+export type CreateSection = { label: string; description: string | null; group: GroupType; system: false; kind: "manual" };
+export type UpdateSection = Pick<Section, "label" | "description" | "group">;
 
 /**
  * Manual sections store membership directly; smart sections derive it from `filter`,

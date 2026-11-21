@@ -1,10 +1,10 @@
 import { Disc, Film, Shapes, Star, Tv, type LucideIcon } from "lucide-react";
 
-export type MediaType = "movie" | "tv" | "ova" | "special" | "other";
-export const MEDIA_TYPES: MediaType[] = ["movie", "tv", "ova", "special", "other"] as const;
+export type MediaType = "film" | "tv" | "ova" | "special" | "other";
+export const MEDIA_TYPES: MediaType[] = ["film", "tv", "ova", "special", "other"] as const;
 
 export const MEDIA_ICONS: Record<MediaType, LucideIcon> = {
-	movie: Film,
+	film: Film,
 	tv: Tv,
 	ova: Disc,
 	special: Star,
@@ -12,7 +12,7 @@ export const MEDIA_ICONS: Record<MediaType, LucideIcon> = {
 };
 
 export const MEDIA_TYPE_COLORS: Record<MediaType, string> = {
-	movie: "#7F77DD",
+	film: "#7F77DD",
 	tv: "#1D9E75",
 	ova: "#D4537E",
 	special: "#FAC775",
@@ -20,7 +20,7 @@ export const MEDIA_TYPE_COLORS: Record<MediaType, string> = {
 };
 
 export const MEDIA_TYPE_LABELS: Record<MediaType, string> = {
-	movie: "Movie",
+	film: "Film",
 	tv: "TV",
 	ova: "OVA",
 	special: "Special",

@@ -1,6 +1,8 @@
 import fs from "fs";
 import type { Animu } from "../models/animu.model";
 import { DEFAULT_SETTINGS, type Settings } from "../models/settings.model.ts";
+import { asEntryId } from "../models/ids.ts";
+import { isManual } from "../models/section.model.ts";
 
 const DATA_FILE = "./src/database/animu.json";
 const SETTINGS_FILE = "./src/database/settings.json";
@@ -14,11 +16,55 @@ export function readAnimuData(): Animu {
         entry.tags ??= [];
         entry.totalEpisodesOverride ??= null;
     }
+    // Sections written before `description` existed on the model are missing it entirely (undefined,
+    // not null) — validation rejects undefined, so any update on an unmigrated section would fail.
+    for (const section of Object.values(data.sections)) {
+        section.description ??= null;
+    }
+
     return data;
 }
 
 export function writeAnimuData(data: Animu): void {
     fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2), "utf-8");
+}
+
+/**
+ * Entries that don't belong to any manual section have nowhere to show up in the UI, so this folds
+ * them into "Unsorted" (identified by label, same as textLog's status-name mapping) for display.
+ *
+ * Deliberately NOT part of `readAnimuData` — every write handler starts with a read, and mutating
+ * `data.sections` there would get persisted as a side effect of an unrelated write. In particular,
+ * moving an entry between sections is two sequential requests (remove from source, then add to
+ * target); in the gap between them the entry briefly belongs to no section on disk, and a read during
+ * that gap would sweep it into Unsorted — then the *target* write would persist that phantom
+ * membership too, duplicating the entry. Callers must only use this on the response of a read-only
+ * route, never on data that's about to be written back.
+ */
+export function withUnsortedFallback(data: Animu): Animu {
+    const unsorted = Object.values(data.sections).find(s => isManual(s) && s.label === "Unsorted");
+    if (!unsorted || !isManual(unsorted)) return data;
+
+    const sectioned = new Set<string>();
+    for (const section of Object.values(data.sections)) {
+        if (!isManual(section) || section.id === unsorted.id) continue;
+        for (const id of section.entryIds) sectioned.add(id);
+    }
+
+    const unsortedSet = new Set(unsorted.entryIds);
+    const missing = Object.keys(data.entries)
+        .filter(id => !sectioned.has(id) && !unsortedSet.has(asEntryId(id)))
+        .map(asEntryId);
+
+    if (missing.length === 0) return data;
+
+    return {
+        ...data,
+        sections: {
+            ...data.sections,
+            [unsorted.id]: { ...unsorted, entryIds: [...unsorted.entryIds, ...missing] },
+        },
+    };
 }
 
 export function readSettings(): Settings {

@@ -38,7 +38,7 @@ export const GlobalStyle = createGlobalStyle`
     --color-group-watched: #5DCAA5;
     --color-group-other: #5B5FC7;
 
-    --color-media-movie: #7F77DD;
+    --color-media-film: #7F77DD;
     --color-media-tv: #1D9E75;
     --color-media-ova: #D4537E;
     --color-media-special: #FAC775;

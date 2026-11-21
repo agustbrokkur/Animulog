@@ -17,16 +17,27 @@ function randomSuffix(length = 16): string {
     return result;
 }
 
-export function newEntryId(): EntryId {
-    return `ent_${randomSuffix()}` as EntryId;
+// 80 bits of entropy per id makes a collision practically impossible, but this is a cheap safety net
+// (mirrors the old uuidv4-based generator, which looped the same way against existing ids).
+function uniqueId<T extends string>(prefix: string, existingIds?: Iterable<string>): T {
+    const existing = existingIds ? new Set(existingIds) : null;
+    let id: string;
+    do {
+        id = `${prefix}${randomSuffix()}`;
+    } while (existing?.has(id));
+    return id as T;
 }
 
-export function newSectionId(): SectionId {
-    return `sec_${randomSuffix()}` as SectionId;
+export function newEntryId(existingIds?: Iterable<string>): EntryId {
+    return uniqueId<EntryId>("ent_", existingIds);
 }
 
-export function newFranchiseId(): FranchiseId {
-    return `fr_${randomSuffix()}` as FranchiseId;
+export function newSectionId(existingIds?: Iterable<string>): SectionId {
+    return uniqueId<SectionId>("sec_", existingIds);
+}
+
+export function newFranchiseId(existingIds?: Iterable<string>): FranchiseId {
+    return uniqueId<FranchiseId>("fr_", existingIds);
 }
 
 export function systemSectionId(slug: string): SectionId {

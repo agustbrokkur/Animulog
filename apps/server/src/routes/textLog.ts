@@ -157,7 +157,7 @@ textLogRouter.post("/import/commit", (req: Request<any, any, LogRow[]>, res: Res
                 if (row.note) existing.note = row.note;
                 existing.timestamps.updated = now;
             } else {
-                const newId = newEntryId();
+                const newId = newEntryId(Object.keys(data.entries));
                 const newEntry: Entry = {
                     id: newId,
                     mediaType: row.mediaType,

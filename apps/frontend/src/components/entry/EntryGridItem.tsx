@@ -10,7 +10,7 @@ import { MoveMenu } from "../layout/entry/MoveMenu";
 import { MediaTypeMenu } from "../layout/entry/MediaTypeMenu";
 import { StatusMenu } from "../layout/entry/StatusMenu";
 import { OpenButton } from "../layout/entry/OpenButton";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useAdjustEntryProgress, useMoveEntryToSection, useUpdateEntryMediaType, useUpdateEntryStatus } from "../../hooks/useAnime";
 import { useOpenMenuTracker } from "../../hooks/useOpenMenuTracker";
 import { useEntryPanel } from "../../context/EntryPanelContext";
@@ -118,7 +118,53 @@ const ScrimRow = styled.div`
 
 const Footer = styled.div`
 	display: flex;
-	alignitems: flex-start;
+	align-items: flex-start;
+	gap: 6px;
+`;
+
+const OrderBox = styled.div<{ $color: string }>`
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	width: 26px;
+	height: 26px;
+	border-radius: 6px;
+	background: var(--bg-3);
+	border: 1px solid var(--border);
+	transition: border-color 150ms;
+
+	&:focus-within {
+		border-color: ${({ $color }) => $color};
+	}
+`;
+
+const OrderInput = styled.input<{ $color: string }>`
+	width: 100%;
+	height: 100%;
+	padding: 0;
+	text-align: center;
+	font-size: 12px;
+	font-weight: 700;
+	font-family: inherit;
+	color: var(--text-dim);
+	background: transparent;
+	border: none;
+	border-radius: inherit;
+	transition:
+		color 150ms,
+		background 150ms;
+
+	&:hover {
+		color: var(--text);
+		background: var(--bg-4);
+	}
+
+	&:focus {
+		outline: none;
+		color: var(--text);
+		background: color-mix(in srgb, ${({ $color }) => $color} 22%, var(--bg-2));
+	}
 `;
 
 const Title = styled.button`
@@ -148,9 +194,12 @@ const Title = styled.button`
 interface Props {
 	entry: Entry;
 	sections: Section[];
+	order?: number;
+	/** Commits a new 0-based position for this entry within its section's custom order. Only rendered when the entry belongs to a manually-ordered section. */
+	onReorder?: (newIndex: number) => void;
 }
 
-export const EntryGridItem = React.memo(({ entry, sections }: Props) => {
+export const EntryGridItem = React.memo(({ entry, sections, order, onReorder }: Props) => {
 	const { displayTitle, displayCover, displayTotalEpisodes: total } = resolveEntry(entry);
 	const color = STATUS_COLORS[entry.status];
 	const ratingValue = entry.score ?? entry.source?.communityRating ?? null;
@@ -161,6 +210,21 @@ export const EntryGridItem = React.memo(({ entry, sections }: Props) => {
 	const { mutate: updateStatus } = useUpdateEntryStatus();
 	const { anyOpen: menuOpen, setMenuOpen } = useOpenMenuTracker();
 	const { openPanel } = useEntryPanel();
+
+	const [orderValue, setOrderValue] = useState(order != null ? String(order) : "");
+	useEffect(() => {
+		if (order != null) setOrderValue(String(order));
+	}, [order]);
+
+	const commitOrder = () => {
+		if (order == null || !onReorder) return;
+		const parsed = Number.parseInt(orderValue, 10);
+		if (Number.isNaN(parsed) || parsed === order) {
+			setOrderValue(String(order));
+			return;
+		}
+		onReorder(parsed);
+	};
 
 	return (
 		<Wrap>
@@ -205,6 +269,22 @@ export const EntryGridItem = React.memo(({ entry, sections }: Props) => {
 			</Card>
 
 			<Footer>
+				{order != null && (
+					<OrderBox $color={color} onClick={(e) => e.stopPropagation()}>
+						<OrderInput
+							$color={color}
+							type="text"
+							inputMode="numeric"
+							value={orderValue}
+							onChange={(e) => setOrderValue(e.target.value.replace(/[^0-9]/g, ""))}
+							onBlur={commitOrder}
+							onKeyDown={(e) => {
+								if (e.key === "Enter") e.currentTarget.blur();
+								if (e.key === "Escape") setOrderValue(String(order));
+							}}
+						/>
+					</OrderBox>
+				)}
 				<Title onClick={() => openPanel(entry.id)}>{displayTitle}</Title>
 			</Footer>
 		</Wrap>

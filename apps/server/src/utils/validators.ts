@@ -57,6 +57,9 @@ export function validateUpdateSection(section: UpdateSection): string | null {
     if (!isValidString(section.label)) {
         return "Invalid section label";
     }
+    if (section.description !== null && typeof section.description !== "string") {
+        return "Invalid section description";
+    }
     if (!GROUP_TYPES.includes(section.group)) {
         return "Invalid group type";
     }
