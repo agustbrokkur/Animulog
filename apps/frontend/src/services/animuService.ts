@@ -1,137 +1,46 @@
+import { request } from "./api";
 import type { Animu } from "../types/animu";
 import type { CreateEntry, EntryPatch } from "../types/entry";
 import type { CreateSection, UpdateSection } from "../types/section";
 import type { UpdateFranchise } from "../types/franchise";
 
-const BASE_API_URL = import.meta.env.VITE_API_URL;
-
-export const getAnimu = async (): Promise<Animu> => {
-	const res = await fetch(`${BASE_API_URL}/animu`);
-
-	if (!res.ok) throw new Error("Failed to fetch animu");
-
-	return res.json();
-};
+export const getAnimu = () => request<Animu>("/animu", "Couldn't load your library");
 
 export const createEntry = async (entry: CreateEntry): Promise<string> => {
-	const res = await fetch(`${BASE_API_URL}/animu/entries`, {
+	const { id } = await request<{ id: string }>("/animu/entries", "Couldn't create the entry", {
 		method: "POST",
-		headers: { "Content-Type": "application/json" },
-		body: JSON.stringify(entry),
+		body: entry,
 	});
-
-	if (!res.ok) throw new Error("Failed to create entry");
-
-	const { id } = await res.json();
 	return id;
 };
 
-export const patchEntry = async (id: string, patch: EntryPatch): Promise<void> => {
-	const res = await fetch(`${BASE_API_URL}/animu/entries/${id}`, {
-		method: "PATCH",
-		headers: { "Content-Type": "application/json" },
-		body: JSON.stringify(patch),
-	});
+export const patchEntry = (id: string, patch: EntryPatch) => request(`/animu/entries/${id}`, "Couldn't save the entry", { method: "PATCH", body: patch });
 
-	if (!res.ok) throw new Error("Failed to update entry");
-};
+export const deleteEntry = (id: string) => request(`/animu/entries/${id}`, "Couldn't delete the entry", { method: "DELETE" });
 
-export const deleteEntry = async (id: string): Promise<void> => {
-	const res = await fetch(`${BASE_API_URL}/animu/entries/${id}`, {
-		method: "DELETE",
-	});
+export const updateEntryFranchise = (id: string, title: string | null) =>
+	request(`/animu/entries/${id}/franchise`, "Couldn't add entry to Franchise", { method: "PUT", body: { title } });
 
-	if (!res.ok) throw new Error("Failed to delete entry");
-};
-
-export const updateEntryFranchise = async (id: string, title: string | null): Promise<void> => {
-	const res = await fetch(`${BASE_API_URL}/animu/entries/${id}/franchise`, {
+export const updateSectionEntries = (sectionId: string, entryIds: string[]) =>
+	request<string[]>(`/animu/sections/${sectionId}/entries`, "Couldn't update section's entries", {
 		method: "PUT",
-		headers: { "Content-Type": "application/json" },
-		body: JSON.stringify({ title }),
+		body: { entryIds },
 	});
 
-	if (!res.ok) throw new Error("Failed to update entry franchise");
+export const createSection = async (section: CreateSection): Promise<string> => {
+	const { id } = await request<{ id: string }>(`/animu/sections`, "Couldn't add the section", { method: "POST", body: section });
+	return id;
 };
 
-export const updateSectionEntries = async (sectionId: string, entryIds: string[]): Promise<string[]> => {
-	const res = await fetch(`${BASE_API_URL}/animu/sections/${sectionId}/entries`, {
-		method: "PUT",
-		headers: { "Content-Type": "application/json" },
-		body: JSON.stringify({ entryIds }),
-	});
+export const updateSection = (id: string, section: UpdateSection) => request(`/animu/sections/${id}`, "Couldn't update the section", { method: "PUT", body: section });
 
-	if (!res.ok) throw new Error("Failed to update section entries");
+export const deleteSection = (id: string) => request(`/animu/sections/${id}`, "Couldn't delete the section", { method: "DELETE" });
 
-	return res.json();
-};
+export const reorderSections = (sectionIds: string[]) => request<string[]>("/animu/sections/reorder", "Couldn't reorder the sections", { method: "PUT", body: { sectionIds } });
 
-export const createSection = async (section: CreateSection): Promise<void> => {
-	const res = await fetch(`${BASE_API_URL}/animu/sections`, {
-		method: "POST",
-		headers: { "Content-Type": "application/json" },
-		body: JSON.stringify(section),
-	});
+export const updateFranchise = (id: string, franchise: UpdateFranchise) => request(`/animu/franchises/${id}`, "Couldn't update the Franchise", { method: "PUT", body: franchise });
 
-	if (!res.ok) throw new Error("Failed to create section");
-};
+export const deleteFranchise = (id: string) => request(`/animu/franchises/${id}`, "Couldn't delete the Franchise", { method: "DELETE" });
 
-export const updateSection = async (id: string, section: UpdateSection): Promise<void> => {
-	const res = await fetch(`${BASE_API_URL}/animu/sections/${id}`, {
-		method: "PUT",
-		headers: { "Content-Type": "application/json" },
-		body: JSON.stringify(section),
-	});
-
-	if (!res.ok) throw new Error("Failed to update section");
-};
-
-export const deleteSection = async (id: string): Promise<void> => {
-	const res = await fetch(`${BASE_API_URL}/animu/sections/${id}`, {
-		method: "DELETE",
-	});
-
-	if (!res.ok) throw new Error("Failed to delete section");
-};
-
-export const reorderSections = async (sectionIds: string[]): Promise<string[]> => {
-	const res = await fetch(`${BASE_API_URL}/animu/sections/reorder`, {
-		method: "PUT",
-		headers: { "Content-Type": "application/json" },
-		body: JSON.stringify({ sectionIds }),
-	});
-
-	if (!res.ok) throw new Error("Failed to reorder sections");
-
-	return res.json();
-};
-
-export const updateFranchise = async (id: string, franchise: UpdateFranchise): Promise<void> => {
-	const res = await fetch(`${BASE_API_URL}/animu/franchises/${id}`, {
-		method: "PUT",
-		headers: { "Content-Type": "application/json" },
-		body: JSON.stringify(franchise),
-	});
-
-	if (!res.ok) throw new Error("Failed to update franchise");
-};
-
-export const deleteFranchise = async (id: string): Promise<void> => {
-	const res = await fetch(`${BASE_API_URL}/animu/franchises/${id}`, {
-		method: "DELETE",
-	});
-
-	if (!res.ok) throw new Error("Failed to delete franchise");
-};
-
-export const updateFranchiseEntries = async (franchiseId: string, entryIds: string[]): Promise<string[]> => {
-	const res = await fetch(`${BASE_API_URL}/animu/franchises/${franchiseId}/entries`, {
-		method: "PUT",
-		headers: { "Content-Type": "application/json" },
-		body: JSON.stringify({ entryIds }),
-	});
-
-	if (!res.ok) throw new Error("Failed to update franchise entries");
-
-	return res.json();
-};
+export const updateFranchiseEntries = (franchiseId: string, entryIds: string[]) =>
+	request<string[]>(`/animu/franchises/${franchiseId}/entries`, "Couldn't update the Franchise entries", { method: "PUT", body: { entryIds } });

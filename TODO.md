@@ -12,6 +12,13 @@ Work top to bottom where you can; the tiers are explained below.
 - File paths are relative to the repo root. Line hints (`~L218`) are approximate; they drift as code changes, so search for the function name if the line doesn't match.
 - **Picking an item up in a new AI chat:** point the AI at this file and the item ID, e.g. *"Read TODO.md and implement D1. Tick it when done."* Each item is written to be understandable on its own.
 
+### Code conventions
+
+Follow these in all new code, and in code shown in guides:
+
+- **Arrow functions, not `function` declarations:** `export const sortEntries = (entries: Entry[]): Entry[] => { … }`. This covers components, hooks, helpers and services. Classes and their methods stay as they are. Generic arrows in `.tsx` files need a trailing comma (`<Item,>`) so they aren't read as JSX. Older code that doesn't follow this yet is tracked in L7.
+- **Descriptive variable names:** `sectionEntryIds`, `downloadLink`, `newer`/`older`, not `ids`, `a`, `tmp`, `e` or `err`.
+
 ### Tiers
 
 | Tier | Meaning |
@@ -98,7 +105,7 @@ Work top to bottom where you can; the tiers are explained below.
   - **Done when:** quick actions send only the field they change.
   > Done: the old `PUT /entries/:id` is removed, along with `validateUpdateEntry`, `UpdateEntry` and the `updateEntry` service. `useUpdateEntry` now takes `{ entryId, patch }` instead of `{ entry, patch }`.
 
-- [ ] **C5 · Show errors to the user (toasts)**
+- [x] **C5 · Show errors to the user (toasts)**
   - **Problem:**
     - No failed save is ever shown. Optimistic updates roll back silently.
     - The service functions throw generic messages and throw away the server's `message`.
@@ -110,6 +117,7 @@ Work top to bottom where you can; the tiers are explained below.
     - Add one shared `request()` helper in `services/` that reads `{ message }` from error responses and throws it. Use it for every call.
     - Wrap the Settings export and import handlers in try/catch.
   - **Done when:** a rejected save shows a toast with the server's message.
+  > Done with `sonner` (`<Toaster>` in `main.tsx`). `request()` and `ApiError` live in `services/api.ts`; every service call goes through them. The toast title is what was being attempted ("Couldn't save the entry") and the server's `message` is the description; "Can't reach the server" when the request never got a response. `showErrorToast` (`utils/showErrorToast.ts`) merges identical errors into one toast. Besides the `MutationCache`, a `QueryCache` `onError` toasts failed loads, but only when nothing is on screen yet, so a failing background refetch stays quiet. `handleFileSelected` uses `mutate` with `onSuccess` instead of `mutateAsync`, so there's no promise left to reject. Tested in the browser: an unreachable server on "+1" shows one toast and rolls back; a first load with no server shows "Couldn't load your library".
 
 - [ ] **C6 · Record started / finished / dropped dates automatically**
   - **Problem:** No code anywhere sets `firstStarted`, `lastStarted`, `firstFinished`, `lastFinished`, `lastDropped` or `finishedCount`, and none of the existing entries have them. As a result, all of these show nothing: "Date Started/Finished" sorting, the started/finished/dropped filters, the "finished" line in the activity chart, and the rewatch statistics.
@@ -208,10 +216,11 @@ Work top to bottom where you can; the tiers are explained below.
   - **Where:** `apps/server/src/utils/validators.ts` (~L15).
   - **Fix:** `typeof value === "string" && value.trim().length > 0`. Check the other helpers for the same problem.
 
-- [ ] **B3 · Settings number fields save on every keystroke and can't be cleared**
+- [x] **B3 · Settings number fields save on every keystroke and can't be cleared**
   - **Problem:** Each keystroke sends a settings save, and emptying a field snaps it to 1, so you can't clear it and type a new number.
   - **Where:** `apps/frontend/src/pages/SettingsPage.tsx` (~L285, ~L305).
   - **Fix:** Keep the value as local text while typing; validate and save on blur or Enter.
+  > Done: `SettingsNumberInput` in `SettingsPage.tsx` keeps a draft while focused and shows the saved value otherwise, so there's no effect syncing props into state. Invalid input (empty, below the minimum, not whole) shows a toast and falls back to the saved value; an unchanged value sends nothing.
 
 - [ ] **B4 · "Fetch All" can undo matches you picked by hand, and auto-matching is weak**
   - **Problem:** The batch job re-searches every entry by title, so "Fetch All" can replace a correct match you picked by hand. The best match is simply the first result with the right format, with no title or year check.
@@ -253,7 +262,7 @@ Work top to bottom where you can; the tiers are explained below.
   - **Problem:** `timestamps.updated` is taken from whatever the client sends.
   - **Fix:** The server sets `timestamps.updated = Date.now()` on every entry write. The client stops sending it. Do this alongside C4.
 
-- [ ] **B11 · Inconsistent server responses**
+- [x] **B11 · Inconsistent server responses**
   - **Where:** `apps/server/src/routes/entries.ts`, `sections.ts`, `franchises.ts`.
   - **Problems and fixes:**
     - Entry `PUT` and `DELETE` return 201; they should return 200 (or 204).
@@ -262,15 +271,28 @@ Work top to bottom where you can; the tiers are explained below.
     - The section-label duplicate check is case-sensitive while the franchise one isn't. Make both case-insensitive.
     - `POST /sections` doesn't return the new section's id. Return it, like `POST /entries` does.
     - `PUT /sections/:id/entries` doesn't check that the entry ids exist. Ignore or reject unknown ids.
-  > Progress: the entry `PUT` problems (201 status, "Error creating entry" log) went away when C4 replaced that route with `PATCH`. Entry `DELETE` still returns 201; the rest is still open.
+  > Done: the entry `PUT` problems went away when C4 replaced that route with `PATCH`; entry `DELETE` now returns 200. Unknown entry ids are rejected with a 400 that lists them, so a stale frontend list shows up as a toast instead of being silently dropped. The frontend `createSection` returns the new id too. Also fixed: `PUT /sections/:id/entries` logged failures as "Error fetching section".
 
-- [ ] **B12 · Bad request bodies return an HTML error page with a stack trace**
+- [x] **B12 · Bad request bodies return an HTML error page with a stack trace**
   - **Problem:** If a request body isn't valid JSON, or is a bare `null`, `express.json()` throws before any route runs (its strict mode only accepts objects and arrays). Express's default error handler then answers with an HTML page holding the full stack trace and local file paths (e.g. `D:\Backlogs\...\body-parser\...`). The frontend expects JSON with a `message`, and leaking paths is bad practice if the server is ever reachable beyond localhost.
   - **Where:** `apps/server/src/server.ts` (no error-handling middleware is registered).
   - **Fix:** Register an error handler after `app.use("/api", routes)`, using Express's 4-argument signature `(error, request, response, next)`:
     - If `error.type === "entity.parse.failed"`, respond `400 { message: "Request body must be valid JSON" }`.
     - Otherwise log the error on the server and respond `500 { message: "Internal server error" }`, without the stack.
   - **Done when:** `curl -X POST localhost:3001/api/animu/entries -H "Content-Type: application/json" -d 'null'` returns a JSON 400, not HTML.
+  > Done. Also added: a body over the 10 MB limit returns `413 { message }`, and an unknown `/api` route returns `404 { message: "No route for GET /api/…" }` instead of Express's HTML page. Route `catch` blocks still send the raw error text; see B14.
+
+- [ ] **B13 · A library that fails to load looks empty**
+  - **Problem:** If the server can't be reached, list pages show "No entries found" and a count of 0, as if the library were empty. C5's toast says the load failed, but the toast disappears after a few seconds and the page keeps saying the library is empty.
+  - **Where:** the list pages (Library, Section, Favorites, Search, Franchise) and anything else that reads `useAnimu()` and treats missing data as "no entries".
+  - **Fix:** Tell the three states apart with `isPending` / `isError` from `useAnimu()`: loading, failed to load (with a "Retry" button that calls `refetch()`), and genuinely empty. Best done with I2's shared `EmptyState`, so every list page gets it at once.
+  - **Done when:** with the server stopped, the Library page says it couldn't load and offers a retry, rather than "No entries found".
+
+- [ ] **B14 · Server errors send internal error text to the browser**
+  - **Problem:** `handleError` responds with `` `${message}: ${error.message}` ``. For file-system errors that message holds full local paths (e.g. `ENOENT: no such file or directory, open 'D:\Backlogs\…\animu.json'`), and C5 now shows it in a toast. It's the same leak B12 fixed for parse errors, just in the routes' own `catch` blocks.
+  - **Where:** `apps/server/src/utils/errorUtils.ts`.
+  - **Fix:** Log the full error on the server as now, but respond with only the route's own message (e.g. `500 { message: "Error updating entry" }`).
+  - **Done when:** a failing file read returns a 500 whose `message` contains no path.
 
 ---
 
@@ -329,7 +351,8 @@ Work top to bottom where you can; the tiers are explained below.
   - **Frontend:**
     - Remove Tailwind (`tailwindcss`, `@tailwindcss/vite`, and the plugin in `vite.config.ts`); it's installed but never used.
     - Delete the unused template files: `src/assets/hero.png`, `react.svg`, `vite.svg`, `public/icons.svg`.
-    - Delete the empty `src/services/api.ts`.
+    - ~~Delete the empty `src/services/api.ts`.~~
+      > Dropped: it now holds `request()` and `ApiError` (C5).
     - Give `index.html` a proper `<title>`.
 
 - [ ] **L3 · Breadcrumb fixes**
@@ -355,6 +378,27 @@ Work top to bottom where you can; the tiers are explained below.
     - Add a retention setting, e.g. "keep the last N automatic backups". Never auto-delete manual or safety backups, or count them separately.
     - Add `DELETE /api/animu/backups/:filename` and a download route.
     - Add Delete and Download buttons on the Settings page.
+
+- [ ] **L7 · Convert `function` declarations to arrow functions**
+  - **Problem:** The project convention is arrow functions (see *Code conventions* at the top), but older code mixes in `function` declarations. The frontend is mostly arrows already. The server is almost entirely `function`.
+  - **Where:**
+    - **Frontend** (26 declarations): `App.tsx`, `components/entry/EntryDetailPanel.tsx`, `components/layout/actions/FilterMenu/FilterChipSection.tsx`, `context/EntryPanelContext.tsx`, `hooks/` (`useAnchoredPanel`, `useAnime`, `useConfirm`, `useDebouncedValue`, `useEntryEditor`, `useEntrySearch`, `useOpenMenuTracker`), `pages/SourceManagerPage.tsx`, `types/` (`entry`, `filters`, `section`), `utils/` (`applyEntryFilters`, `computeStatistics`, `sortEntries`).
+    - **Server** (63 declarations): `utils/validators.ts` (23), `models/ids.ts` (9), `services/anilist.ts` (9), `utils/fileUtils.ts` (7), `services/sourceJobs.ts` (6), `utils/backup.ts` (4), `models/entry.model.ts` (2), plus one each in `models/animu.model.ts`, `routes/textLog.ts` and `utils/errorUtils.ts`.
+  - **Watch out for:** a `const` arrow can't be used before the line that defines it. Calls inside other functions are fine, but if a file calls a helper at the top level (e.g. `const DEFAULTS = buildDefaults()`), the helper has to be defined above that line.
+  - **Find what's left:** search for `^(export )?(default )?(async )?function ` in `apps/`.
+  - **Done when:** that search finds nothing.
+
+- [ ] **L8 · A failed first load takes about 7 seconds to report**
+  - **Problem:** TanStack Query retries a failed query 3 times by default (after about 1, 2 and 4 seconds). With the server down, the "Couldn't load your library" toast (C5) only appears about 7 seconds after the page opens.
+  - **Where:** the `QueryClient` in `apps/frontend/src/main.tsx`.
+  - **Fix:** Set `defaultOptions: { queries: { retry: 1 } }`. The server runs on the same machine, so most failures mean it's stopped, not a flaky network. Keep at least one retry so a page loaded while nodemon is restarting the server still succeeds.
+  - **Done when:** with the server stopped, the toast appears within about 2 seconds.
+
+- [ ] **L9 · `npm run stop` kills whatever is using ports 3001 and 5173**
+  - **Problem:** The root `stop` script kills every process listening on 3001 or 5173, whichever project it belongs to. Another project's server on 3001 would be killed without warning. (`stop:cmd` does the same.)
+  - **Where:** root `package.json`, the `stop` and `stop:cmd` scripts.
+  - **Fix:** Only stop processes whose command line points into this repo, e.g. filter `Get-CimInstance Win32_Process` on `CommandLine -like "*Animulog*"` before `Stop-Process`. Alternatively, move the script into a small `scripts/stop.ps1` so it's readable.
+  - **Done when:** `npm run stop` leaves a non-Animulog process on port 3001 running.
 
 ---
 

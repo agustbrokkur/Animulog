@@ -9,6 +9,7 @@ import { SortMenu } from "../components/layout/actions/SortMenu/SortMenu";
 import { ViewModeSwitcher } from "../components/layout/actions/ViewModeSwitcher";
 import { ActionButton, Input } from "../components/entry/EntryDetailBody.styles";
 import { useConfirm } from "../hooks/useConfirm";
+import { showErrorToast } from "../utils/showErrorToast";
 
 const Wrap = styled.div`
 	overflow-y: auto;
@@ -185,6 +186,50 @@ const MatchTag = styled.span<{ $matched: boolean }>`
 	background: ${({ $matched }) => ($matched ? "var(--color-accent-dim)" : "var(--color-brand-dim)")};
 `;
 
+interface SettingsNumberInputProps {
+	savedValue: number;
+	minimum: number;
+	disabled?: boolean;
+	onCommit: (newValue: number) => void;
+}
+
+// A number field that keeps what you type locally and only saves on blur or Enter
+const SettingsNumberInput = ({ savedValue, minimum, disabled, onCommit }: SettingsNumberInputProps) => {
+	const [draftText, setDraftText] = useState(String(savedValue));
+	const [isEditing, setIsEditing] = useState(false);
+
+	const commitDraft = () => {
+		setIsEditing(false);
+		const parsedValue = Number(draftText);
+		const isValidWholeNumber = draftText.trim() !== "" && Number.isInteger(parsedValue) && parsedValue >= minimum;
+
+		if (!isValidWholeNumber) {
+			showErrorToast(new Error(`Enter a whole number of at least ${minimum}`));
+			return; // the field falls back to the saved value
+		}
+		if (parsedValue !== savedValue) onCommit(parsedValue);
+	};
+
+	return (
+		<IntervalInput
+			type="number"
+			min={minimum}
+			step={1}
+			disabled={disabled}
+			value={isEditing ? draftText : String(savedValue)}
+			onFocus={() => {
+				setDraftText(String(savedValue));
+				setIsEditing(true);
+			}}
+			onChange={(changeEvent) => setDraftText(changeEvent.target.value)}
+			onBlur={commitDraft}
+			onKeyDown={(keyEvent) => {
+				if (keyEvent.key === "Enter") keyEvent.currentTarget.blur();
+			}}
+		/>
+	);
+};
+
 const patchSettings = (settings: Settings, patch: Partial<Settings>): Settings => ({ ...settings, ...patch });
 
 export const SettingsView = () => {
@@ -205,24 +250,35 @@ export const SettingsView = () => {
 	const applyPatch = (patch: Partial<Settings>) => updateSettings(patchSettings(settings, patch));
 
 	const handleExport = async () => {
-		const text = await exportLog();
-		const blob = new Blob([text], { type: "text/plain" });
-		const url = URL.createObjectURL(blob);
-		const anchor = document.createElement("a");
-		anchor.href = url;
-		anchor.download = "animulog-export.txt";
-		anchor.click();
-		URL.revokeObjectURL(url);
+		try {
+			const text = await exportLog();
+			const blob = new Blob([text], { type: "text/plain" });
+			const url = URL.createObjectURL(blob);
+			const anchor = document.createElement("a");
+			anchor.href = url;
+			anchor.download = "animulog-export.txt";
+			anchor.click();
+			URL.revokeObjectURL(url);
+		} catch (error) {
+			showErrorToast(error);
+		}
 	};
 
-	const handleFileSelected = async (e: ChangeEvent<HTMLInputElement>) => {
-		const file = e.target.files?.[0];
-		e.target.value = "";
-		if (!file) return;
+	const handleFileSelected = async (changeEvent: ChangeEvent<HTMLInputElement>) => {
+		const selectedFile = changeEvent.target.files?.[0];
+		changeEvent.target.value = "";
+		if (!selectedFile) return;
 
-		const text = await file.text();
-		const rows = await previewImport(text);
-		setPreviewRows(rows);
+		let fileText: string;
+		try {
+			fileText = await selectedFile.text();
+		} catch (error) {
+			showErrorToast(error);
+			return;
+		}
+
+		// A failed preview is already toasted by the global MutationCache handler.
+		previewImport(fileText, { onSuccess: (rows) => setPreviewRows(rows) });
 	};
 
 	const updatePreviewRow = (index: number, patch: Partial<ImportRow>) => {
@@ -275,14 +331,15 @@ export const SettingsView = () => {
 					<Row>
 						<FieldGroup>
 							<FieldLabel>AniList requests per minute</FieldLabel>
-							<FieldHint>Throttles both manual search and batch source fetching. AniList's normal limit is 90/min, currently degraded to 30/min — keep this under that.</FieldHint>
+							<FieldHint>
+								Throttles both manual search and batch source fetching. AniList's normal limit is 90/min, currently degraded to 30/min — keep this under that.
+							</FieldHint>
 						</FieldGroup>
 						<ControlRow>
-							<IntervalInput
-								type="number"
-								min={1}
-								value={settings.anilistRequestsPerMinute}
-								onChange={(e) => applyPatch({ anilistRequestsPerMinute: Math.max(1, Number(e.target.value) || 1) })}
+							<SettingsNumberInput
+								minimum={1}
+								savedValue={settings.anilistRequestsPerMinute}
+								onCommit={(requestsPerMinute) => applyPatch({ anilistRequestsPerMinute: requestsPerMinute })}
 							/>
 							<FieldHint>req/min</FieldHint>
 						</ControlRow>
@@ -297,15 +354,17 @@ export const SettingsView = () => {
 							<FieldHint>Checked hourly; creates a backup once the interval below has elapsed.</FieldHint>
 						</FieldGroup>
 						<ControlRow>
-							<IntervalInput
-								type="number"
-								min={1}
+							<SettingsNumberInput
+								minimum={1}
 								disabled={!settings.autoBackup.enabled}
-								value={settings.autoBackup.intervalHours}
-								onChange={(e) => applyPatch({ autoBackup: { ...settings.autoBackup, intervalHours: Math.max(1, Number(e.target.value) || 1) } })}
+								savedValue={settings.autoBackup.intervalHours}
+								onCommit={(intervalHours) => applyPatch({ autoBackup: { ...settings.autoBackup, intervalHours } })}
 							/>
 							<FieldHint>hours</FieldHint>
-							<ToggleButton $on={settings.autoBackup.enabled} onClick={() => applyPatch({ autoBackup: { ...settings.autoBackup, enabled: !settings.autoBackup.enabled } })} />
+							<ToggleButton
+								$on={settings.autoBackup.enabled}
+								onClick={() => applyPatch({ autoBackup: { ...settings.autoBackup, enabled: !settings.autoBackup.enabled } })}
+							/>
 						</ControlRow>
 					</Row>
 

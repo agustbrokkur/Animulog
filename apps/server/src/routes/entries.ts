@@ -174,7 +174,7 @@ entryRouter.delete("/:id", (req: Request<{ id: string }>, res: Response) => {
 
 		writeAnimuData(data);
 
-		res.status(201).json({ ok: true });
+		res.status(200).json({ ok: true });
 	} catch (error: unknown) {
 		handleError(res, error, "Error deleting entry");
 	}
