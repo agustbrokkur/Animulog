@@ -1,32 +1,58 @@
 import fs from "fs";
+import path from "node:path";
+import { DATA_FILE, SETTINGS_FILE } from "./paths.ts";
 import type { Animu } from "../models/animu.model";
 import { DEFAULT_SETTINGS, type Settings } from "../models/settings.model.ts";
-import { asEntryId } from "../models/ids.ts";
+import { asEntryId, systemSectionId } from "../models/ids.ts";
 import { isManual } from "../models/section.model.ts";
 
-const DATA_FILE = "./src/database/animu.json";
-const SETTINGS_FILE = "./src/database/settings.json";
+function createEmptyLibrary(): Animu {
+	const unsortedSectionId = systemSectionId("unsorted");
+	return {
+		entries: {},
+		sections: {
+			[unsortedSectionId]: {
+				id: unsortedSectionId,
+				label: "Unsorted",
+				description: null,
+				group: "other",
+				system: true,
+				order: 0,
+				kind: "manual",
+				entryIds: [],
+			},
+		},
+		franchises: {},
+		relations: [],
+	};
+}
 
 export function readAnimuData(): Animu {
-    const data: Animu = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
-    // Entries written before `tags`/`totalEpisodesOverride` existed on the model are missing them
-    // entirely (undefined, not null) — validation rejects undefined, so any update on an unmigrated
-    // entry would fail. Backfilling here self-heals the file the next time each entry is saved.
-    for (const entry of Object.values(data.entries)) {
-        entry.tags ??= [];
-        entry.totalEpisodesOverride ??= null;
-    }
-    // Sections written before `description` existed on the model are missing it entirely (undefined,
-    // not null) — validation rejects undefined, so any update on an unmigrated section would fail.
-    for (const section of Object.values(data.sections)) {
-        section.description ??= null;
-    }
+	if (!fs.existsSync(DATA_FILE)) {
+		const emptyLibrary = createEmptyLibrary();
+		writeAnimuData(emptyLibrary);
+		return emptyLibrary;
+	}
 
-    return data;
+	const data: Animu = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
+	// Entries written before `tags`/`totalEpisodesOverride` existed on the model are missing them
+	// entirely (undefined, not null) — validation rejects undefined, so any update on an unmigrated
+	// entry would fail. Backfilling here self-heals the file the next time each entry is saved.
+	for (const entry of Object.values(data.entries)) {
+		entry.tags ??= [];
+		entry.totalEpisodesOverride ??= null;
+	}
+	// Sections written before `description` existed on the model are missing it entirely (undefined,
+	// not null) — validation rejects undefined, so any update on an unmigrated section would fail.
+	for (const section of Object.values(data.sections)) {
+		section.description ??= null;
+	}
+
+	return data;
 }
 
 export function writeAnimuData(data: Animu): void {
-    fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2), "utf-8");
+	writeFileAtomic(DATA_FILE, JSON.stringify(data, null, 2));
 }
 
 /**
@@ -42,40 +68,58 @@ export function writeAnimuData(data: Animu): void {
  * route, never on data that's about to be written back.
  */
 export function withUnsortedFallback(data: Animu): Animu {
-    const unsorted = Object.values(data.sections).find(s => isManual(s) && s.label === "Unsorted");
-    if (!unsorted || !isManual(unsorted)) return data;
+	const unsorted = Object.values(data.sections).find((s) => isManual(s) && s.label === "Unsorted");
+	if (!unsorted || !isManual(unsorted)) return data;
 
-    const sectioned = new Set<string>();
-    for (const section of Object.values(data.sections)) {
-        if (!isManual(section) || section.id === unsorted.id) continue;
-        for (const id of section.entryIds) sectioned.add(id);
-    }
+	const sectioned = new Set<string>();
+	for (const section of Object.values(data.sections)) {
+		if (!isManual(section) || section.id === unsorted.id) continue;
+		for (const id of section.entryIds) sectioned.add(id);
+	}
 
-    const unsortedSet = new Set(unsorted.entryIds);
-    const missing = Object.keys(data.entries)
-        .filter(id => !sectioned.has(id) && !unsortedSet.has(asEntryId(id)))
-        .map(asEntryId);
+	const unsortedSet = new Set(unsorted.entryIds);
+	const missing = Object.keys(data.entries)
+		.filter((id) => !sectioned.has(id) && !unsortedSet.has(asEntryId(id)))
+		.map(asEntryId);
 
-    if (missing.length === 0) return data;
+	if (missing.length === 0) return data;
 
-    return {
-        ...data,
-        sections: {
-            ...data.sections,
-            [unsorted.id]: { ...unsorted, entryIds: [...unsorted.entryIds, ...missing] },
-        },
-    };
+	return {
+		...data,
+		sections: {
+			...data.sections,
+			[unsorted.id]: { ...unsorted, entryIds: [...unsorted.entryIds, ...missing] },
+		},
+	};
 }
 
 export function readSettings(): Settings {
-    if (!fs.existsSync(SETTINGS_FILE)) {
-        writeSettings(DEFAULT_SETTINGS);
-        return DEFAULT_SETTINGS;
-    }
-    // Merge over DEFAULT_SETTINGS so settings.json files written before a new field existed still parse.
-    return { ...DEFAULT_SETTINGS, ...JSON.parse(fs.readFileSync(SETTINGS_FILE, "utf-8")) };
+	if (!fs.existsSync(SETTINGS_FILE)) {
+		writeSettings(DEFAULT_SETTINGS);
+		return DEFAULT_SETTINGS;
+	}
+	// Merge over DEFAULT_SETTINGS so settings.json files written before a new field existed still parse.
+	return { ...DEFAULT_SETTINGS, ...JSON.parse(fs.readFileSync(SETTINGS_FILE, "utf-8")) };
 }
 
 export function writeSettings(settings: Settings): void {
-    fs.writeFileSync(SETTINGS_FILE, JSON.stringify(settings, null, 2), "utf-8");
+	writeFileAtomic(SETTINGS_FILE, JSON.stringify(settings, null, 2));
+}
+
+/**
+ * Writes to a temp file next to the target, flushes it to disk, then renames it over the target.
+ * A rename replaces the file in one step, so a crash leaves either the old file or the new one,
+ * never a half-written file.
+ */
+export function writeFileAtomic(file: string, contents: string): void {
+	fs.mkdirSync(path.dirname(file), { recursive: true });
+	const tempFile = `${file}.tmp`;
+	const tempFileDescriptor = fs.openSync(tempFile, "w");
+	try {
+		fs.writeFileSync(tempFileDescriptor, contents, "utf-8");
+		fs.fsyncSync(tempFileDescriptor);
+	} finally {
+		fs.closeSync(tempFileDescriptor);
+	}
+	fs.renameSync(tempFile, file);
 }

@@ -27,19 +27,20 @@ Work top to bottom where you can; the tiers are explained below.
 
 ## D — Data safety
 
-- [ ] **D1 · Changing an entry's franchise can delete another franchise**
+- [x] **D1 · Changing an entry's franchise can delete another franchise**
   - **Problem:** New franchises get the id `fr_of_<entryId>` (`franchiseIdFor`). If entry A creates franchise "X", entry B joins "X", and A is then moved to a new franchise "Y", the new "Y" reuses the id of "X" and overwrites it. "X" disappears and B is left without a franchise.
   - **Where:** `apps/server/src/routes/entries.ts`, `PUT /:id/franchise` (~L218); `franchiseIdFor` in `apps/server/src/models/ids.ts` (~L47).
   - **Fix:** Create new franchises with `newFranchiseId(Object.keys(data.franchises))`. Remove `franchiseIdFor` once nothing uses it.
   - **Done when:** the A/B/X/Y scenario above leaves "X" intact with B in it.
 
-- [ ] **D2 · Backups made in the same minute overwrite each other; restoring can destroy the backup**
+- [x] **D2 · Backups made in the same minute overwrite each other; restoring can destroy the backup**
   - **Problem:** Backup filenames only go down to the minute (`animu-YYYYMMDDHHMM.json`). Two backups in one minute share a name. Restoring a backup from the current minute first writes the "safety backup" over that same file, so the restore copies the current data back onto itself and the chosen backup is lost.
   - **Where:** `apps/server/src/utils/backup.ts` — `createBackup` (~L15), `restoreBackup` (~L48), `BACKUP_FILENAME` regex.
-  - **Fix:** Add seconds and milliseconds to the filename, and refuse to overwrite an existing file (`fs.copyFileSync(src, dst, fs.constants.COPYFILE_EXCL)`, or add a suffix). Update `BACKUP_FILENAME` so it accepts both the old 12-digit names and the new ones.
+  - **Fix:** Add seconds and milliseconds to the filename, and refuse to overwrite an existing file (`fs.copyFileSync(src, dst, fs.constants.COPYFILE_EXCL)`, or add a suffix). ~~Update `BACKUP_FILENAME` so it accepts both the old 12-digit names and the new ones.~~
+  > Done differently: the 4 existing 12-digit backups were renamed to the 17-digit format (`00000` appended) instead of supporting both formats, so `BACKUP_FILENAME_PATTERN` only accepts 17 digits. Also fixed: on Windows `copyFileSync` keeps the source file's modified time, so backups showed the wrong date; `createBackup` now sets it with `fs.utimesSync`, and the renamed backups had their modified time set to the time in their name.
   - **Done when:** two backups taken within one second produce two files, and restoring the newest backup works.
 
-- [ ] **D3 · Data writes aren't atomic, and data paths depend on the working directory**
+- [x] **D3 · Data writes aren't atomic, and data paths depend on the working directory**
   - **Problem:** `writeAnimuData`/`writeSettings` write directly over the file, so a crash or power loss mid-write leaves a truncated `animu.json`. All data paths are `./src/database/...`, so they only work if the server is started from `apps/server`.
   - **Where:** `apps/server/src/utils/fileUtils.ts` (`DATA_FILE`, `SETTINGS_FILE`, `writeAnimuData`, `writeSettings`); `apps/server/src/utils/backup.ts` (`DATA_FILE`, `BACKUP_DIR`).
   - **Fix:** Write to `<file>.tmp`, then `fs.renameSync` it over the real file. Build paths from the module location (`path.join(import.meta.dirname, "../database/...")`), defined once and shared by both files.
@@ -166,6 +167,7 @@ Work top to bottom where you can; the tiers are explained below.
     - Replace the frontend README.
     - Rewrite `SCHEMAS.md` for the current model, or delete it and point to `apps/server/src/models/`.
   - **Done when:** deleting `animu.json` and starting the server gives an empty, working app.
+  > Progress: the code part is done — a missing `animu.json` creates the database folder and an empty library with the system Unsorted section (`sec_sys_unsorted`), and auto-backup skips cleanly with no data file. Remaining: the root README, the frontend README, and `SCHEMAS.md`.
 
 - [ ] **C9 · Linting is broken; fix the config, then the 19 findings**
   - **Problem:**

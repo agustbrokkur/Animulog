@@ -2,6 +2,7 @@
 
 # Data
 **/database/**/*.json
+**/database/**/*.tmp
 
 # Logs
 logs
