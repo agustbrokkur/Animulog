@@ -6,8 +6,8 @@ import {
 	deleteFranchise,
 	deleteSection,
 	getAnimu,
+	patchEntry,
 	reorderSections,
-	updateEntry,
 	updateEntryFranchise,
 	updateFranchise,
 	updateFranchiseEntries,
@@ -15,7 +15,7 @@ import {
 	updateSectionEntries,
 } from "../services/animuService";
 import type { Animu } from "../types/animu";
-import type { CreateEntry, Entry, UpdateEntry } from "../types/entry";
+import { resolveEntry, type CreateEntry, type Entry, type EntryPatch } from "../types/entry";
 import type { UpdateFranchise } from "../types/franchise";
 import type { MediaType } from "../types/mediaType";
 import type { Status } from "../types/status";
@@ -58,7 +58,11 @@ export const useMoveEntryToSection = () => {
 
 			const source = sections.filter(isManualSection).find((s) => s.id !== targetSectionId && s.entryIds.includes(entryId));
 
-			if (source) await updateSectionEntries(source.id, source.entryIds.filter((id) => id !== entryId));
+			if (source)
+				await updateSectionEntries(
+					source.id,
+					source.entryIds.filter((id) => id !== entryId),
+				);
 			if (!target.entryIds.includes(entryId)) await updateSectionEntries(target.id, [...target.entryIds, entryId]);
 		},
 		onSuccess: () => queryClient.invalidateQueries({ queryKey: ["animu"] }),
@@ -135,22 +139,25 @@ export const useReorderFranchiseEntries = () => {
 	});
 };
 
+// Progress after a +/- step, never below 0, and never above the episode total when it's known.
+function progressAfterStep(entry: Entry, delta: number): number {
+	const steppedProgress = Math.max(0, (entry.progress ?? 0) + delta);
+	const totalEpisodes = resolveEntry(entry).displayTotalEpisodes;
+	return totalEpisodes != null ? Math.min(totalEpisodes, steppedProgress) : steppedProgress;
+}
+
 /** Adjusts an entry's episode progress by `delta`. Missing progress starts from 0, so incrementing lands on 1; progress never drops below 0. */
 export const useAdjustEntryProgress = () => {
 	const queryClient = useQueryClient();
 
 	return useMutation({
-		mutationFn: ({ entry, delta }: { entry: Entry; delta: number }) => {
-			const { id, source, ...rest } = entry;
-			const progress = Math.max(0, (entry.progress ?? 0) + delta);
-			return updateEntry(id, { ...rest, progress, timestamps: { ...entry.timestamps, updated: Date.now() } });
-		},
+		mutationFn: ({ entry, delta }: { entry: Entry; delta: number }) => patchEntry(entry.id, { progress: progressAfterStep(entry, delta) }),
 		onMutate: async ({ entry, delta }) => {
 			await queryClient.cancelQueries({ queryKey: ["animu"] });
 			const previous = queryClient.getQueryData<Animu>(["animu"]);
 
 			if (previous?.entries[entry.id]) {
-				const progress = Math.max(0, (entry.progress ?? 0) + delta);
+				const progress = progressAfterStep(entry, delta);
 				queryClient.setQueryData<Animu>(["animu"], {
 					...previous,
 					entries: {
@@ -174,10 +181,7 @@ export const useUpdateEntryMediaType = () => {
 	const queryClient = useQueryClient();
 
 	return useMutation({
-		mutationFn: ({ entry, mediaType }: { entry: Entry; mediaType: MediaType }) => {
-			const { id, source, ...rest } = entry;
-			return updateEntry(id, { ...rest, mediaType, timestamps: { ...entry.timestamps, updated: Date.now() } });
-		},
+		mutationFn: ({ entry, mediaType }: { entry: Entry; mediaType: MediaType }) => patchEntry(entry.id, { mediaType }),
 		onMutate: async ({ entry, mediaType }) => {
 			await queryClient.cancelQueries({ queryKey: ["animu"] });
 			const previous = queryClient.getQueryData<Animu>(["animu"]);
@@ -203,18 +207,19 @@ export const useUpdateEntry = () => {
 	const queryClient = useQueryClient();
 
 	return useMutation({
-		mutationFn: ({ entry, patch }: { entry: Entry; patch: Partial<UpdateEntry> }) => {
-			const { id, source, ...rest } = entry;
-			return updateEntry(id, { ...rest, ...patch, timestamps: patch.timestamps ?? { ...entry.timestamps, updated: Date.now() } });
-		},
-		onMutate: async ({ entry, patch }) => {
+		mutationFn: ({ entryId, patch }: { entryId: string; patch: EntryPatch }) => patchEntry(entryId, patch),
+		onMutate: async ({ entryId, patch }) => {
 			await queryClient.cancelQueries({ queryKey: ["animu"] });
 			const previous = queryClient.getQueryData<Animu>(["animu"]);
+			const existingEntry = previous?.entries[entryId];
 
-			if (previous?.entries[entry.id]) {
+			if (previous && existingEntry) {
 				queryClient.setQueryData<Animu>(["animu"], {
 					...previous,
-					entries: { ...previous.entries, [entry.id]: { ...previous.entries[entry.id], ...patch } },
+					entries: {
+						...previous.entries,
+						[entryId]: { ...existingEntry, ...patch, timestamps: { ...existingEntry.timestamps, ...patch.timestamps } },
+					},
 				});
 			}
 
@@ -252,10 +257,7 @@ export const useUpdateEntryStatus = () => {
 	const queryClient = useQueryClient();
 
 	return useMutation({
-		mutationFn: ({ entry, status }: { entry: Entry; status: Status }) => {
-			const { id, source, ...rest } = entry;
-			return updateEntry(id, { ...rest, status, timestamps: { ...entry.timestamps, updated: Date.now() } });
-		},
+		mutationFn: ({ entry, status }: { entry: Entry; status: Status }) => patchEntry(entry.id, { status }),
 		onMutate: async ({ entry, status }) => {
 			await queryClient.cancelQueries({ queryKey: ["animu"] });
 			const previous = queryClient.getQueryData<Animu>(["animu"]);

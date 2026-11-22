@@ -57,7 +57,13 @@ export type Entry = {
 	timestamps: EntryTimestamps;
 };
 
-export type UpdateEntry = Omit<Entry, "id" | "source">;
+export type EditableEntryField = Exclude<keyof Entry, "id" | "source" | "timestamps">;
+
+export type EditableTimestampField = Exclude<keyof EntryTimestamps, "updated">;
+
+export type EntryPatch = Partial<Pick<Entry, EditableEntryField>> & {
+	timestamps?: Partial<Pick<EntryTimestamps, EditableTimestampField>>;
+};
 
 // source is never client-settable — a new entry always starts with source: null (the cache is populated later).
 // status defaults server-side (settings.defaultEntryStatus) when omitted.

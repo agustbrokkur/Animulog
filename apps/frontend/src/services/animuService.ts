@@ -1,5 +1,5 @@
 import type { Animu } from "../types/animu";
-import type { CreateEntry, UpdateEntry } from "../types/entry";
+import type { CreateEntry, EntryPatch } from "../types/entry";
 import type { CreateSection, UpdateSection } from "../types/section";
 import type { UpdateFranchise } from "../types/franchise";
 
@@ -26,11 +26,11 @@ export const createEntry = async (entry: CreateEntry): Promise<string> => {
 	return id;
 };
 
-export const updateEntry = async (id: string, entry: UpdateEntry): Promise<void> => {
+export const patchEntry = async (id: string, patch: EntryPatch): Promise<void> => {
 	const res = await fetch(`${BASE_API_URL}/animu/entries/${id}`, {
-		method: "PUT",
+		method: "PATCH",
 		headers: { "Content-Type": "application/json" },
-		body: JSON.stringify(entry),
+		body: JSON.stringify(patch),
 	});
 
 	if (!res.ok) throw new Error("Failed to update entry");

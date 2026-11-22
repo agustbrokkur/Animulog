@@ -1,6 +1,6 @@
 import { type Request, type Response, Router } from "express";
-import type { CreateEntry, Entry, EntrySource, UpdateEntry } from "../models/entry.model.ts";
-import { isValidId, isValidString, validateCreateEntry, validateEntrySource, validateUpdateEntry } from "../utils/validators.ts";
+import type { CreateEntry, Entry, EntryPatch, EntrySource } from "../models/entry.model.ts";
+import { isValidId, isValidString, validateCreateEntry, validateEntryPatch, validateEntrySource } from "../utils/validators.ts";
 import { asEntryId, newFranchiseId, newEntryId } from "../models/ids.ts";
 import { isManual } from "../models/section.model.ts";
 import { handleError } from "../utils/errorUtils.ts";
@@ -100,9 +100,9 @@ entryRouter.get("/:id", (req: Request<{ id: string }>, res: Response) => {
 	}
 });
 
-// PUT /api/animu/entries/:id
-// Update entry
-entryRouter.put("/:id", (req: Request<{ id: string }, any, UpdateEntry>, res: Response) => {
+// PATCH /api/animu/entries/:id
+// Changes only the fields sent. The server always sets timestamps.updated.
+entryRouter.patch("/:id", (req: Request<{ id: string }, any, EntryPatch>, res: Response) => {
 	try {
 		const { id } = req.params;
 		if (!isValidId(id)) {
@@ -111,11 +111,11 @@ entryRouter.put("/:id", (req: Request<{ id: string }, any, UpdateEntry>, res: Re
 			});
 		}
 
-		const updatedEntry = req.body;
-		const validated = validateUpdateEntry(updatedEntry);
-		if (validated) {
+		const patch = req.body;
+		const validationMessage = validateEntryPatch(patch);
+		if (validationMessage) {
 			return res.status(400).json({
-				message: validated,
+				message: validationMessage,
 			});
 		}
 
@@ -128,12 +128,17 @@ entryRouter.put("/:id", (req: Request<{ id: string }, any, UpdateEntry>, res: Re
 			});
 		}
 
-		data.entries[asEntryId(id)] = { ...updatedEntry, id: existingEntry.id, source: existingEntry.source };
+		const { timestamps: timestampChanges, ...fieldChanges } = patch;
+		data.entries[asEntryId(id)] = {
+			...existingEntry,
+			...fieldChanges,
+			timestamps: { ...existingEntry.timestamps, ...timestampChanges, updated: Date.now() },
+		};
 
 		writeAnimuData(data);
-		res.status(201).json({ ok: true });
+		res.status(200).json({ ok: true });
 	} catch (error: unknown) {
-		handleError(res, error, "Error creating entry");
+		handleError(res, error, "Error updating entry");
 	}
 });
 
@@ -257,7 +262,22 @@ entryRouter.put("/:id/source", (req: Request<{ id: string }, any, EntrySource>, 
 			});
 		}
 
-		existingEntry.source = source;
+		// Copy the fields by name so extra keys are never stored
+		existingEntry.source = {
+			provider: source.provider,
+			externalId: source.externalId,
+			fetchedAt: source.fetchedAt,
+			englishTitle: source.englishTitle,
+			japaneseTitle: source.japaneseTitle,
+			synopsis: source.synopsis,
+			studios: source.studios,
+			genres: source.genres,
+			coverUrl: source.coverUrl,
+			totalEpisodes: source.totalEpisodes,
+			communityRating: source.communityRating,
+			airedFrom: source.airedFrom,
+			airedTo: source.airedTo,
+		};
 		existingEntry.timestamps.updated = Date.now();
 
 		writeAnimuData(data);

@@ -46,7 +46,7 @@ Work top to bottom where you can; the tiers are explained below.
   - **Fix:** Write to `<file>.tmp`, then `fs.renameSync` it over the real file. Build paths from the module location (`path.join(import.meta.dirname, "../database/...")`), defined once and shared by both files.
   - **Done when:** writes go through a temp file + rename, and the server works when started from the repo root.
 
-- [ ] **D4 · Updating an entry saves whatever fields the browser sends**
+- [x] **D4 · Updating an entry saves whatever fields the browser sends**
   - **Problem:** The entry update route spreads the request body straight into storage, so any extra field gets saved. This is already happening: search results add a `displayTitle` field (`useEntrySearch` returns its own `{ ...entry, displayTitle }` copies), and editing an entry reached from a search saves it. One entry in the current data has it. Settings `PUT` and the source `PUT` (which stores AniList's `format` field) have the same problem.
   - **Where:** `apps/server/src/routes/entries.ts` `PUT /:id` (~L131) and `PUT /:id/source` (~L260); `apps/server/src/routes/settings.ts` (~L31); `apps/frontend/src/hooks/useEntrySearch.ts` (~L37, ~L57).
   - **Fix:**
@@ -54,6 +54,7 @@ Work top to bottom where you can; the tiers are explained below.
     - Frontend: make `useEntrySearch` return the original `Entry` objects rather than its internal search copies.
     - Clean-up: in `readAnimuData`, delete any stray `displayTitle`/`displayCover` keys so the existing bad entry heals itself on its next save.
   - **Done when:** sending an extra field to any of these routes doesn't end up in `animu.json`.
+  > Done differently: the clean-up was a one-off script run by hand on `animu.json` instead of code in `readAnimuData`, so nothing is left behind that only mattered once. The entry route became `PATCH` (C4), which rejects unknown fields with a 400 instead of dropping them; the allowed list is `ENTRY_FIELD_CHECKS` / `TIMESTAMP_FIELD_CHECKS` in `validators.ts`. The source and settings routes copy their fields by name.
 
 - [ ] **D5 · Folder name casing differs between disk and git — the build breaks on Linux/macOS**
   - **Problem:** Git tracks `apps/frontend/src/components/layout/Sidebar/` and `.../Toolbar/`, but the folders on disk and the imports in `Layout.tsx` (~L3-4) use `sidebar`/`toolbar`. Windows doesn't care; a clone on any case-sensitive system fails to resolve the imports.
@@ -65,7 +66,7 @@ Work top to bottom where you can; the tiers are explained below.
 
 ## C — Core
 
-- [ ] **C1 · Applying an AniList match by hand silently fails for some titles**
+- [x] **C1 · Applying an AniList match by hand silently fails for some titles**
   - **Problem:** `validateEntrySource` requires a non-empty English title, Japanese title and synopsis. AniList often has no native title or no description for obscure or unreleased entries, so the manual picker's save is rejected with a 400 and nothing tells you. The batch job doesn't validate, so the same match saves fine there.
   - **Where:** `apps/server/src/utils/validators.ts` `validateEntrySource` (~L222-230).
   - **Fix:** Require `japaneseTitle` and `synopsis` to be strings, but allow them to be empty. Keep `englishTitle` required (the mapper already falls back to the romaji title). Error visibility is handled by C5.
@@ -90,11 +91,12 @@ Work top to bottom where you can; the tiers are explained below.
   - **Fix:** Add `POST /api/animu/entries/:id/move` with body `{ targetSectionId }`. In a single write, it removes the entry from every manual section and appends it to the target. Point `useMoveEntryToSection` at it, and add an optimistic update like the other mutations have.
   - **Done when:** a move is one request and one file write.
 
-- [ ] **C4 · Partial updates (PATCH) instead of sending the whole entry**
+- [x] **C4 · Partial updates (PATCH) instead of sending the whole entry**
   - **Problem:** Every quick action (progress +1, status, media type) sends a full copy of the entry. Two actions in flight can overwrite each other with stale values, and this is also how D4's stray fields get in.
   - **Where:** `apps/server/src/routes/entries.ts`; `apps/frontend/src/hooks/useAnime.ts` (`useAdjustEntryProgress`, `useUpdateEntryMediaType`, `useUpdateEntry`, `useUpdateEntryStatus`); `apps/frontend/src/services/animuService.ts`.
   - **Fix:** Add `PATCH /api/animu/entries/:id`, which accepts any subset of the editable fields, validates only the fields it was sent, and merges them in. The server sets `timestamps.updated` itself (see B10). Switch the frontend mutations to send only what changed. Keep the old `PUT` until nothing uses it, then remove it.
   - **Done when:** quick actions send only the field they change.
+  > Done: the old `PUT /entries/:id` is removed, along with `validateUpdateEntry`, `UpdateEntry` and the `updateEntry` service. `useUpdateEntry` now takes `{ entryId, patch }` instead of `{ entry, patch }`.
 
 - [ ] **C5 · Show errors to the user (toasts)**
   - **Problem:**
@@ -130,7 +132,7 @@ Work top to bottom where you can; the tiers are explained below.
     - Keep the "before" snapshot in an in-memory map on the server, keyed by entry id: `{ at, previousStatus, previousTimestamps }`. Losing it on a server restart is fine.
   - **Where it runs:**
     - On the server, in one helper (e.g. `applyStatusChange(entry, newStatus, now)` in a new `apps/server/src/services/statusHistory.ts`).
-    - Call it from every route that can change status: entry `PUT`/`PATCH` (C4), entry create, and text-import commit (B1). Then it behaves the same from cards, the panel and imports.
+    - Call it from every route that can change status: entry `PATCH` (C4), entry create, and text-import commit (B1). Then it behaves the same from cards, the panel and imports.
     - Set `timestamps.updated` here too (B10).
   - **One-time backfill** in `readAnimuData`: every entry with status Watched and `finishedCount === 0` gets `finishedCount = 1`, with its dates left empty (shown as "Unknown").
   - **Manual corrections (optional, never required):**
@@ -151,7 +153,7 @@ Work top to bottom where you can; the tiers are explained below.
     - List and detail rows: add it to the existing actions row.
     - Side panel and detail page: make it clickable next to the status badge or in the actions row.
     - Leave the existing star badge on covers as an indicator only.
-    - Save with `useUpdateEntry({ patch: { favorite } })` (or the PATCH from C4).
+    - Save with `useUpdateEntry().mutate({ entryId, patch: { favorite } })`, which sends a `PATCH` (C4).
   - **Done when:** favorite can be toggled from cards, rows and the panel, and the cards look unchanged when not hovered.
 
 - [ ] **C8 · A fresh clone doesn't run, and the docs are stale**
@@ -186,6 +188,7 @@ Work top to bottom where you can; the tiers are explained below.
       - Fast-refresh export warnings in `EntryRenderer.tsx` and `EntryPanelContext.tsx`.
     - Server finding: unused `_format` in `services/anilist.ts`. Allow `_`-prefixed unused variables in the config, or restructure the code.
   - **Done when:** `npm run lint` passes in both apps.
+  > Progress: the 4 "unused destructured `source`" findings in `useAnime.ts` are gone (C4 removed that code). Everything else is still open.
 
 ---
 
@@ -200,7 +203,7 @@ Work top to bottom where you can; the tiers are explained below.
     - **The same unmatched title twice in one file creates duplicates.** Flag duplicates in the preview.
     - **You can't remove a row from the preview.** Add a remove button.
 
-- [ ] **B2 · Validation crashes on wrong types instead of returning 400**
+- [x] **B2 · Validation crashes on wrong types instead of returning 400**
   - **Problem:** `isValidString` calls `.trim()` on any value, so sending `title: 123` throws and returns a 500.
   - **Where:** `apps/server/src/utils/validators.ts` (~L15).
   - **Fix:** `typeof value === "string" && value.trim().length > 0`. Check the other helpers for the same problem.
@@ -240,12 +243,13 @@ Work top to bottom where you can; the tiers are explained below.
     - **Media type labels show as `FILM`, `SPECIAL`, etc.** (~L151). Use `MEDIA_TYPE_LABELS`.
     - **Metadata coverage counts legacy placeholder sources as fetched** (~L196). Use `!needsSourceFetch(entry)`.
 
-- [ ] **B9 · Score and progress aren't range-checked**
+- [x] **B9 · Score and progress aren't range-checked**
   - **Problem:** The rating input says 1–10, but any number is accepted on both sides. A negative number is rejected by the server and rolls back silently. Progress can go above the episode total.
   - **Where:** `apps/frontend/src/hooks/useEntryEditor.ts` `handleSave` (~L73); `apps/server/src/utils/validators.ts` (~L132).
   - **Fix:** Server: score is null or between 1 and 10; progress is a whole number ≥ 0. Frontend: clamp the values before saving. Optionally, stop the +1 button at the episode total when it's known.
+  > Done, including the optional part (`progressAfterStep` in `useAnime.ts`). `totalEpisodesOverride` and `timestamps.finishedCount` must also be whole numbers now. Create and `PATCH` share the same checks.
 
-- [ ] **B10 · The server trusts the browser's "last updated" time**
+- [x] **B10 · The server trusts the browser's "last updated" time**
   - **Problem:** `timestamps.updated` is taken from whatever the client sends.
   - **Fix:** The server sets `timestamps.updated = Date.now()` on every entry write. The client stops sending it. Do this alongside C4.
 
@@ -258,6 +262,15 @@ Work top to bottom where you can; the tiers are explained below.
     - The section-label duplicate check is case-sensitive while the franchise one isn't. Make both case-insensitive.
     - `POST /sections` doesn't return the new section's id. Return it, like `POST /entries` does.
     - `PUT /sections/:id/entries` doesn't check that the entry ids exist. Ignore or reject unknown ids.
+  > Progress: the entry `PUT` problems (201 status, "Error creating entry" log) went away when C4 replaced that route with `PATCH`. Entry `DELETE` still returns 201; the rest is still open.
+
+- [ ] **B12 · Bad request bodies return an HTML error page with a stack trace**
+  - **Problem:** If a request body isn't valid JSON, or is a bare `null`, `express.json()` throws before any route runs (its strict mode only accepts objects and arrays). Express's default error handler then answers with an HTML page holding the full stack trace and local file paths (e.g. `D:\Backlogs\...\body-parser\...`). The frontend expects JSON with a `message`, and leaking paths is bad practice if the server is ever reachable beyond localhost.
+  - **Where:** `apps/server/src/server.ts` (no error-handling middleware is registered).
+  - **Fix:** Register an error handler after `app.use("/api", routes)`, using Express's 4-argument signature `(error, request, response, next)`:
+    - If `error.type === "entity.parse.failed"`, respond `400 { message: "Request body must be valid JSON" }`.
+    - Otherwise log the error on the server and respond `500 { message: "Internal server error" }`, without the stack.
+  - **Done when:** `curl -X POST localhost:3001/api/animu/entries -H "Content-Type: application/json" -d 'null'` returns a JSON 400, not HTML.
 
 ---
 

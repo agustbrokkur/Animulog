@@ -64,15 +64,15 @@ export function useEntryEditor(entry: Entry, currentFranchiseTitle: string | nul
 		const addedMs = dateAddedInput ? new Date(dateAddedInput).getTime() : entry.timestamps.added;
 
 		updateEntryMutate({
-			entry,
+			entryId: entry.id,
 			patch: {
 				title: titleInput.trim() ? titleInput.trim() : entry.title,
 				coverOverride: coverInput.trim() ? coverInput.trim() : null,
-				progress: progress != null && Number.isFinite(progress) ? Math.max(0, progress) : null,
-				totalEpisodesOverride: totalEpisodes != null && Number.isFinite(totalEpisodes) ? Math.max(0, totalEpisodes) : null,
-				score: score != null && Number.isFinite(score) ? score : null,
+				progress: progress != null && Number.isFinite(progress) ? Math.max(0, Math.round(progress)) : null,
+				totalEpisodesOverride: totalEpisodes != null && Number.isFinite(totalEpisodes) ? Math.max(0, Math.round(totalEpisodes)) : null,
+				score: score != null && Number.isFinite(score) ? Math.min(10, Math.max(1, score)) : null,
 				tags: tagsState,
-				timestamps: { ...entry.timestamps, added: addedMs, updated: Date.now() },
+				timestamps: { added: addedMs },
 			},
 		});
 
@@ -91,7 +91,7 @@ export function useEntryEditor(entry: Entry, currentFranchiseTitle: string | nul
 
 	const saveNotes = () => {
 		const trimmed = notesValue.trim();
-		updateEntryMutate({ entry, patch: { note: trimmed ? trimmed : null } });
+		updateEntryMutate({ entryId: entry.id, patch: { note: trimmed ? trimmed : null } });
 		setNotesEditing(false);
 	};
 
